@@ -19,7 +19,7 @@ The main aims of this module are:
 objects with preset plotfunctions.
 - Provide full customization of plots including animation of plot parameters
 in time.
-- Use available resources by using [dask](https://github.com/dask/dask) for
+- Use [dask](https://github.com/dask/dask) for computationally efficient
 frame rendering.
-- Use [ffmpeg](https://www.ffmpeg.org/) to enable movie rendering from dataset
+- WIP: Use [ffmpeg](https://www.ffmpeg.org/) to enable movie rendering from dataset
 to finished movie file in jupyter notebooks (my preferred workflow).

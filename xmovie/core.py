@@ -6,6 +6,10 @@ import xarray as xr
 import dask.bag as db
 from .presets import rotating_globe
 
+# is it a good idea to set these here?
+# Needs to be dependent on dpi and videosize
+plt.rcParams.update({"font.size": 16})
+
 
 def frame(pixelwidth, pixelheight, dpi):
     """Creates a Figure sized according to the pixeldimensions"""
@@ -14,7 +18,7 @@ def frame(pixelwidth, pixelheight, dpi):
     return fig
 
 
-def frame_save(fig, frame, odir=None, frame_name="frame_", dpi=150):
+def frame_save(fig, frame, odir=None, frame_name="frame_", dpi=100):
     fig.savefig(
         odir + "/%s%05d.png" % (frame_name, frame),
         dpi=dpi,
@@ -64,7 +68,22 @@ class Movie:
         fig.canvas.draw()
         return fig
 
-    def save(self, odir):
+    def save(self, odir, progress=False):
+        """Short summary.
+
+        Parameters
+        ----------
+        odir : path
+            path to output directory
+        progress : type
+            Show progress bar. Requires
+
+        Returns
+        -------
+        type
+            Description of returned object.
+
+        """
         """Save movie frames out to file.
 
         Parameters

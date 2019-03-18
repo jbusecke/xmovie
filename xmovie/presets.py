@@ -17,6 +17,7 @@ def get_plot_defaults(da):
     defaults["vmin"] = data.min().data
     defaults["vmax"] = data.max().data
     defaults["cbar_kwargs"] = dict(extend="neither")
+    # maybe change to
     return defaults
 
 
@@ -245,7 +246,8 @@ def rotating_globe_dark(
     map_style_kwargs = dict(transform=ccrs.PlateCarree())
 
     data = check_input(da, plot_variable)
-    ax.add_feature(cfeature.OCEAN, color="0.5")
+
+    ax.background_patch.set_facecolor("0.1")
 
     pp = _base_plot(
         ax,
@@ -257,11 +259,23 @@ def rotating_globe_dark(
     )
 
     # the order should be optional? (I can pass z_order for each...)
-    ax.add_feature(cfeature.LAND, color="0.2")
-    ax.set_title(title)  # TODO: I need to figure out how to allow a title...
-    # but that will flicker like crazy
-    # ax.coastlines("50m", color="0.2")
-    ax.coastlines(color="0.2", linewidth=0.5)
+    feature = cfeature.NaturalEarthFeature(
+        name="coastline",
+        category="physical",
+        scale="50m",
+        edgecolor="#AAAAAA",
+        facecolor="none",
+    )
+    ax.add_feature(feature)
+
+    feature = cfeature.NaturalEarthFeature(
+        name="land", category="physical", scale="50m", facecolor="#AAAAAA"
+    )
+    ax.add_feature(feature)
+
     _set_bgcolor(fig, ax, pp)
     ax.set_global()
+    # TODO: I need to figure out how to allow a title...
+    # but that will flicker like crazy
+    ax.set_title(title)
     ax.outline_patch.set_visible(False)

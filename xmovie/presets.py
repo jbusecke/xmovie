@@ -50,6 +50,9 @@ def _core_plot(ax, data, plotmethod=None, **kwargs):
     # For now do it the hard way
     if plotmethod is None:
         p = data.plot(ax=ax, **kwargs)
+    # doesnt work,...i want this for smoother images
+    # elif plotmethod == "imshow":
+    #     p = data.plot.imshow(ax=ax, **kwargs)
     elif plotmethod == "contour":
         p = data.plot.contour(ax=ax, **kwargs)
     elif plotmethod == "contourf":
@@ -104,20 +107,24 @@ def _set_bgcolor(fig, ax, pp, fgcolor="0.7", bgcolor="0.1"):
     "Sets the colorscheme for figure, axis and plot object (`pp`)"
     fig.patch.set_facecolor(bgcolor)
     ax.set_facecolor(bgcolor)
-    cb = pp.colorbar
+    try:
+        cb = pp.colorbar
+    except (AttributeError):
+        cb = None
 
-    # COLORBAR
-    # set colorbar label plus label color
-    cb.set_label(cb.ax.axes.get_ylabel(), color=fgcolor)
+    if cb is not None:
+        # COLORBAR
+        # set colorbar label plus label color
+        cb.set_label(cb.ax.axes.get_ylabel(), color=fgcolor)
 
-    # set colorbar tick color
-    cb.ax.yaxis.set_tick_params(color=fgcolor)
+        # set colorbar tick color
+        cb.ax.yaxis.set_tick_params(color=fgcolor)
 
-    # set colorbar edgecolor
-    cb.outline.set_edgecolor(fgcolor)
+        # set colorbar edgecolor
+        cb.outline.set_edgecolor(fgcolor)
 
-    # set colorbar ticklabels
-    plt.setp(plt.getp(cb.ax.axes, "yticklabels"), color=fgcolor)
+        # set colorbar ticklabels
+        plt.setp(plt.getp(cb.ax.axes, "yticklabels"), color=fgcolor)
 
 
 def _smooth_boundary_globe(projection):

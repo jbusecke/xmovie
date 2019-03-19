@@ -71,7 +71,7 @@ Just clean up all the image files
 ```
 and enjoy your masterpiece.
 
-!['spin spin spin'](docs/gifs/basic.gif)
+!['spin spin spin'](docs/gifs/movie.gif)
 
 ## Modify plots
 The preset plot-functions each have a unique set of keyword arguments for custom looks, but they all support the `xarray` plotting modes via the `plotmethod` keyword:
@@ -86,6 +86,26 @@ mov = Movie(ds, rotating_globe_dark, plotmethod='contour', coastline=False, land
 mov.save('.')
 ```
 !['spin spin spin'](docs/gifs/movie_cont.gif)
+
+```
+ds = xr.tutorial.open_dataset('rasm').Tair
+
+# Interpolate time for smoother animation
+ds['time'].data = np.arange(len(ds['time']))
+ds = ds.interp(time=np.linspace(0,10, 60))
+
+mov = Movie(ds, rotating_globe_dark,
+            cmap='RdYlBu_r',
+            x='xc',
+            y='yc', #accepts keyword arguments from the xarray plotting interface
+            lat_start=45, # Custom keywords from `rotating_globe_dark
+            lon_rotations=0.2)
+mov.save('.')
+```
+
+!['rasm_spinning'](docs/gifs/movie_rasm.gif)
+
+
 
 ### Custom Plots
 You can customize any plot based on an xarray data structure and a 'frame-dimension' (usually time, or another dimension that will evolve with time in the movie).

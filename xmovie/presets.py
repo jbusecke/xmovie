@@ -218,15 +218,17 @@ def rotating_globe_dark(
     plotmethod=None,
     plot_variable=None,
     overlay_variables=None,
-    lon_start=0,
-    lon_rotations=-1,
-    lat_start=35,
+    lon_start=-10,
+    lon_rotations=-0.5,
+    lat_start=15,
     lat_rotations=0.05,
+    land=False,
+    coastline=True,
     **kwargs
 ):
 
     # split kwargs out
-    title = kwargs.pop("title", "")
+    # title = kwargs.pop("title", "")
 
     # rotate lon_rotations times throughout movie and start at lon_start
     lon = np.linspace(0, 360 * lon_rotations, len(da.time)) + lon_start
@@ -247,7 +249,24 @@ def rotating_globe_dark(
 
     data = check_input(da, plot_variable)
 
-    ax.background_patch.set_facecolor("0.1")
+    # the order should be optional? (I can pass z_order for each...)
+    if land:
+        feature = cfeature.NaturalEarthFeature(
+            name="land", category="physical", scale="50m", facecolor="0.2"
+        )
+        ax.add_feature(feature)
+
+    if coastline:
+        feature = cfeature.NaturalEarthFeature(
+            name="coastline",
+            category="physical",
+            scale="50m",
+            edgecolor="0.3",
+            facecolor="none",
+        )
+        ax.add_feature(feature)
+
+    ax.background_patch.set_facecolor("k")
 
     pp = _base_plot(
         ax,
@@ -258,24 +277,10 @@ def rotating_globe_dark(
         **map_style_kwargs
     )
 
-    # the order should be optional? (I can pass z_order for each...)
-    feature = cfeature.NaturalEarthFeature(
-        name="coastline",
-        category="physical",
-        scale="50m",
-        edgecolor="#AAAAAA",
-        facecolor="none",
-    )
-    ax.add_feature(feature)
-
-    feature = cfeature.NaturalEarthFeature(
-        name="land", category="physical", scale="50m", facecolor="#AAAAAA"
-    )
-    ax.add_feature(feature)
-
     _set_bgcolor(fig, ax, pp)
     ax.set_global()
     # TODO: I need to figure out how to allow a title...
     # but that will flicker like crazy
-    ax.set_title(title)
+    # ax.set_title(title)
+    ax.set_title("")
     ax.outline_patch.set_visible(False)

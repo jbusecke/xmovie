@@ -4,7 +4,7 @@ mpl.use("Agg")
 import matplotlib.pyplot as plt
 import xarray as xr
 import dask.bag as db
-from .presets import rotating_globe
+from .presets import rotating_globe, rotating_globe_dark
 
 # is it a good idea to set these here?
 # Needs to be dependent on dpi and videosize
@@ -32,7 +32,7 @@ class Movie:
     def __init__(
         self,
         da,
-        plotfunc,
+        plotfunc=None,
         framedim="time",
         pixelwidth=1920,
         pixelheight=1080,
@@ -44,7 +44,10 @@ class Movie:
         self.dpi = dpi
         self.data = da
         self.framedim = framedim
-        self.plotfunc = plotfunc
+        if plotfunc is None:
+            self.plotfunc = rotating_globe_dark
+        else:
+            self.plotfunc = plotfunc
         self.kwargs = kwargs
         ##
         # add kwargs to plotfunc
@@ -62,10 +65,9 @@ class Movie:
         matplotlib.figure
 
         """
-        # TODO I could probably define the func with the movie class
         fig = frame(self.pixelwidth, self.pixelheight, self.dpi)
         self.plotfunc(self.data, fig, timestep, **self.kwargs)
-        fig.canvas.draw()
+        # fig.canvas.draw()
         return fig
 
     def save(self, odir, progress=False):

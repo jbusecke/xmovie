@@ -43,7 +43,7 @@ mov.preview(10);
 # preview 100th frame. Note the rotation
 mov.preview(100);
 ```
-!['10th frame']('docs/pics/preview1.png')!['100th frame']('docs/pics/preview2.png')
+!['10th frame'](docs/pics/preview1.png)!['100th frame'](docs/pics/preview2.png)
 
 ### Convert images to movies
 In the commandline you can now convert the frames to a movie file using [ffmpeg]()
@@ -138,7 +138,7 @@ ax2.set_title('Data at station');
 fig.subplots_adjust(wspace=0.4)
 ```
 
-!['static_example']('docs/pics/static.png')
+!['static_example'](docs/pics/static.png)
 
 All that is needed to wrap this into a function with the signature `func(ds, fig, timestamp, **kwargs)`, where `ds` is an xarray Dataset or DataArray, `fig` is a `matplotlib.figure` object and `timestamp` is an integer which indicates the movie frame.
 
@@ -166,4 +166,4 @@ def custom_plotfunc(ds, fig, tt):
 mov_custom = Movie(ds, custom_plotfunc)
 mov_custom.preview(2)
 ```
-!['sweet_custom_plots']('docs/gifs/movie_custom.gif')
+!['sweet_custom_plots'](docs/gifs/movie_custom.gif)

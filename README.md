@@ -25,6 +25,10 @@ frame rendering.
 - WIP: Use [ffmpeg](https://www.ffmpeg.org/) to enable movie rendering from dataset
 to finished movie file in jupyter notebooks (my preferred workflow). -->
 
+## Installation
+Clone this repository with `$ git clone git@github.com:jbusecke/xmovie.git` and
+install it from source `$ python setup.py install`
+
 ## Presets for quick movies
 Using the presets of __xmovie__ making a movie is very easy:
 
@@ -44,6 +48,11 @@ mov.preview(10);
 mov.preview(100);
 ```
 !['10th frame'](docs/pics/preview1.png)!['100th frame'](docs/pics/preview2.png)
+
+and save out each frame as a picture
+```
+mov.save('.') # saves to current directory
+```
 
 ### Convert images to movies
 In the commandline you can now convert the frames to a movie file using [ffmpeg]()
@@ -167,3 +176,6 @@ mov_custom = Movie(ds, custom_plotfunc)
 mov_custom.preview(2)
 ```
 !['sweet_custom_plots'](docs/gifs/movie_custom.gif)
+
+> Note: This animation looks terrible as a gif if using the suggested settings
+> above. Instead use `! ffmpeg -y -i {moviename}.mp4 {moviename}.gif`

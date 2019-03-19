@@ -157,7 +157,11 @@ def custom_plotfunc(ds, fig, tt):
     ds_station = ds.sel(**station)
 
     (ax1, ax2) = fig.subplots(ncols=2)
-    ds.isel(time=tt).plot(ax=ax1, vmin=ds.min(), vmax=ds.max(), center=True) #Colorlimits need to be fixed!
+
+    # Colorlimits need to be fixed or your video is going to cause seizures.
+    # This is the only modification from the code above!
+    ds.isel(time=tt).plot(ax=ax1, vmin=ds.min(), vmax=ds.max(), cmap='RdBu_r')
+     
     ax1.plot(station['x'], station['y'], marker='*', color='k' ,markersize=15)
     ax1.text(station['x']+4, station['y']+4, 'Station', color='k' )
     ds_station.isel(time=slice(0,tt)).plot(ax=ax2)

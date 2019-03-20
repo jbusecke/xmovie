@@ -206,7 +206,15 @@ def rotating_globe(
     )
     ax.set_title("")
     ax.set_global()
-    ax.coastlines()
+    if coastline:
+        feature = cfeature.NaturalEarthFeature(
+            name="coastline",
+            category="physical",
+            scale="50m",
+            edgecolor="0.2",
+            facecolor="none",
+        )
+        ax.add_feature(feature)
     gl = ax.gridlines()
     # Increase gridline res
     gl.n_steps = 500

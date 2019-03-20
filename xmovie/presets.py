@@ -175,6 +175,8 @@ def rotating_globe(
     lon_rotations=-1,
     lat_start=35,
     lat_rotations=0.05,
+    land=False,
+    coastline=True,
     **kwargs
 ):
 
@@ -206,12 +208,19 @@ def rotating_globe(
     )
     ax.set_title("")
     ax.set_global()
+    # the order should be optional? (I can pass z_order for each...)
+    if land:
+        feature = cfeature.NaturalEarthFeature(
+            name="land", category="physical", scale="50m", facecolor="0.2"
+        )
+        ax.add_feature(feature)
+
     if coastline:
         feature = cfeature.NaturalEarthFeature(
             name="coastline",
             category="physical",
             scale="50m",
-            edgecolor="0.2",
+            edgecolor="0.3",
             facecolor="none",
         )
         ax.add_feature(feature)

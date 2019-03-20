@@ -108,6 +108,12 @@ def _set_bgcolor(fig, ax, pp, fgcolor="0.7", bgcolor="0.1"):
     "Sets the colorscheme for figure, axis and plot object (`pp`)"
     fig.patch.set_facecolor(bgcolor)
     ax.set_facecolor(bgcolor)
+
+    # Use the boundary to blend the edges of the globe into background
+    ax.outline_patch.set_edgecolor(bgcolor)
+    ax.outline_patch.set_antialiased(True)
+    ax.outline_patch.set_linewidth(2)
+
     try:
         cb = pp.colorbar
     except (AttributeError):
@@ -283,4 +289,3 @@ def rotating_globe_dark(
     # but that will flicker like crazy
     # ax.set_title(title)
     ax.set_title("")
-    ax.outline_patch.set_visible(False)

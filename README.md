@@ -29,6 +29,8 @@ to finished movie file in jupyter notebooks (my preferred workflow). -->
 Clone this repository with `$ git clone git@github.com:jbusecke/xmovie.git` and
 install it from source `$ python setup.py install`
 
+>If you dont have [ssh keys](https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account) set up, you can use `$ git clone https://github.com/jbusecke/xmovie.git` and enter your github password.
+
 ## Presets for quick movies
 Using the presets of __xmovie__ making a movie is very easy:
 

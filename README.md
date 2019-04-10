@@ -35,6 +35,7 @@ install it from source `$ python setup.py install`
 Using the presets of __xmovie__ making a movie is very easy:
 
 ```python
+import xarray as xr
 from xmovie import Movie
 from xmovie.presets import rotating_globe_dark
 

@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 import xarray as xr
 import cartopy.crs as ccrs
@@ -26,7 +27,10 @@ def check_input(da, fieldname):
     if isinstance(da, xr.Dataset):
         if fieldname is None:
             fieldname = list(da.data_vars)[0]
-            print("No plot_variable supplied. Defaults to `%s`" % fieldname)
+            warnings.warn(
+                "No plot_variable supplied. Defaults to `%s`" % fieldname,
+                UserWarning,
+            )
         data = da[fieldname]
     elif isinstance(da, xr.DataArray):
         data = da

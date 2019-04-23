@@ -83,56 +83,110 @@ def _combine_ffmpeg_command(sourcefolder, moviename, pattern="frame_%05d.png"):
     return command
 
 
+def _execute_command(command, verbose=False, error=True):
+    p = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
+
+    if verbose:
+        while True:
+            out = p.stdout.read(1)
+            out_check = out.decode()
+            if out_check == "" and p.poll() is not None:
+                break
+            if out_check != "":
+                # only display 10 lines, this cant be that hard?
+                sys.stdout.write(out)
+                sys.stdout.flush()
+    else:
+        p.wait()
+    if error:
+        if p.returncode != 0:
+            raise RuntimeError("Command %s failed" % command)
+    return p
+
+
+def _check_ffmpeg_execute(command, verbose=False):
+    if _check_ffmpeg_version() is None:
+        raise RuntimeError(
+            "Could not find an ffmpeg version on the system. \
+        Please install ffmpeg with e.g. `conda install -c conda-forge ffmpeg`"
+        )
+    else:
+        try:
+            p = _execute_command(command, verbose=verbose)
+            return p
+        except RuntimeError:
+            raise RuntimeError(
+                "Something has gone wrong. Use `verbose=True` to check if ffmpeg displays a problem"
+            )
+
+
+def create_gif_palette(mpath, ppath="palette.png", verbose=False):
+    command = "ffmpeg -y -i %s -vf palettegen %s" % (mpath, ppath)
+    p = _check_ffmpeg_execute(command, verbose=verbose)
+    return p
+
+
+def convert_gif(
+    mpath,
+    gpath="movie.gif",
+    ppath="palette.png",
+    resolution=[480, 320],
+    verbose=False,
+    remove_movie=True,
+    remove_palette=True,
+):
+    command = (
+        "ffmpeg -y -i %s -i %s -filter_complex paletteuse -r 10 -s %ix%i %s"
+        % (mpath, ppath, resolution[0], resolution[1], gpath)
+    )
+    p = _check_ffmpeg_execute(command, verbose=verbose)
+
+    print("GIF created at %s" % (gpath))
+    if remove_movie:
+        try:
+            os.remove(mpath)
+        except:
+            warnings.warn("movie removal failed")
+            pass
+
+    if remove_palette:
+        try:
+            os.remove(ppath)
+        except:
+            warnings.warn("palette removal failed")
+            pass
+    return p
+
+
 def write_movie(
     sourcefolder,
     moviename,
     pattern="frame_%05d.png",
     remove_frames=True,
     verbose=False,
-    debug=False,
+    overwrite_existing=False,
 ):
-    if _check_ffmpeg_version() is None:
-        warnings.warn(
-            "Could not find an ffmpeg version on the system. \
-        Please install ffmpeg with e.g. `conda install -c conda-forge ffmpeg`"
-        )
-    else:
-        command = _combine_ffmpeg_command(
-            sourcefolder, moviename, pattern=pattern
-        )
-
-        p = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
-
-        if verbose:
-            while True:
-                out = p.stdout.read(1)
-                out_check = out.decode()
-                if out_check == "" and p.poll() != None:
-                    break
-                if out_check != "":
-                    # only display 10 lines, this cant be that hard?
-                    sys.stdout.write(out)
-                    sys.stdout.flush()
-        else:
-            p.wait()
-
-        if p.returncode != 0:
+    path = os.path.join(sourcefolder, moviename)
+    if os.path.exists(path):
+        if not overwrite_existing:
             raise RuntimeError(
-                "Something has gone wrong. Use `verbose=True` to check if ffmpeg displays a problem"
+                "File `%s` already exists. Set `overwrite_existing` to True to overwrite."
+                % (path)
             )
+    command = _combine_ffmpeg_command(sourcefolder, moviename, pattern=pattern)
+    p = _check_ffmpeg_execute(command, verbose=verbose)
 
-        else:
-            print("Movie created at %s" % (moviename))
-            if remove_frames:
-                try:
-                    rem_name = "frame_%05d.png".replace("%05d", "*")
-                    for f in glob.glob(os.path.join(sourcefolder, rem_name)):
-                        os.remove(f)
-                except:
-                    print("frame removal failed")
-                    pass
+    print("Movie created at %s" % (moviename))
+    if remove_frames:
+        try:
+            rem_name = pattern.replace("%05d", "*")
+            for f in glob.glob(os.path.join(sourcefolder, rem_name)):
+                os.remove(f)
+        except:
+            warnings.warn("frame removal failed")
+            pass
 
-        return p
+    return p
 
 
 class Movie:
@@ -209,7 +263,8 @@ class Movie:
         remove_frames=True,
         remove_movie=True,
         progress=False,
-        debug=False,
+        verbose=False,
+        overwrite_existing=False,
     ):
         """Short summary.
 
@@ -226,24 +281,51 @@ class Movie:
         progress : Bool
             Experimental switch to show progress output. This will be refined
             in future version (the default is False).
+        verbose : Bool
+            Switch to show all shell output. Mostly for debugging (the default is False).
         """
 
         # parse out directory and filename
         dirname = os.path.dirname(filename)
         filename = os.path.basename(filename)
 
+        # detect gif filename
+
+        isgif = "gif" in filename
+        if isgif:
+            giffile = filename
+            moviefile = filename.replace("gif", "mp4")
+            gpath = os.path.join(dirname, giffile)
+            ppath = os.path.join(dirname, "palette.png")
+        else:
+            moviefile = filename
+
+        mpath = os.path.join(dirname, moviefile)
+
         # print frames
         self.save_frames(dirname, progress=progress)
 
-        # convert to movie
+        # Create movie
         write_movie(
             dirname,
-            filename,
+            moviefile,
             pattern=self.frame_pattern,
             remove_frames=remove_frames,
-            verbose=progress,
-            debug=debug,
+            verbose=verbose,
+            overwrite_existing=overwrite_existing,
         )
+
+        # Create gif
+        if isgif:
+            create_gif_palette(mpath, ppath=ppath, verbose=verbose)
+            convert_gif(
+                mpath,
+                gpath=gpath,
+                ppath=ppath,
+                resolution=[480, 320],
+                verbose=verbose,
+                remove_movie=remove_movie,
+            )
 
     # def save_parallel(
     #     self, odir, da, plotfunc, framedim, partition_size=5, func_kwargs={}

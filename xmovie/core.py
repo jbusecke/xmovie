@@ -1,3 +1,6 @@
+from __future__ import print_function
+from future.utils import iteritems
+
 import re
 import os
 import sys
@@ -7,6 +10,7 @@ import gc
 
 from .presets import rotating_globe_dark
 from subprocess import Popen, PIPE, STDOUT
+
 
 import matplotlib as mpl
 

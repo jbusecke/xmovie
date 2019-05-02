@@ -97,7 +97,7 @@ def _smooth_boundary_NearsidePerspective(
     # Re-implement the cartopy code to figure out the boundary.
 
     # This is just really a guess....
-    WGS84_SEMIMAJOR_AXIS = 6_378_137.0
+    WGS84_SEMIMAJOR_AXIS = 6378137.0
     # because I cannot import it above...this should be fixed upstream
     # anyways...
 

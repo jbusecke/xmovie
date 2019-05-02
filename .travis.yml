@@ -7,7 +7,6 @@ notifications:
 matrix:
   fast_finish: true
   include:
-  - env: CONDA_ENV=py27
   - env: CONDA_ENV=py35
   - env: CONDA_ENV=py36
   - env: CONDA_ENV=py36

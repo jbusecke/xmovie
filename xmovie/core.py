@@ -3,6 +3,7 @@ import os
 import sys
 import glob
 import warnings
+import gc
 
 from .presets import rotating_globe_dark
 from subprocess import Popen, PIPE, STDOUT
@@ -32,21 +33,27 @@ except:
 plt.rcParams.update({"font.size": 16})
 
 
-def frame(pixelwidth, pixelheight, dpi):
+def create_frame(pixelwidth, pixelheight, dpi):
     """Creates a Figure sized according to the pixeldimensions"""
     fig = plt.figure()
     fig.set_size_inches(pixelwidth / dpi, pixelheight / dpi)
     return fig
 
 
-def frame_save(fig, frame, odir=None, pattern="frame_%05d.png", dpi=100):
+def frame_save(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100):
     fig.savefig(
-        os.path.join(odir, pattern % (frame)),
+        os.path.join(odir, frame_pattern % (frame)),
         dpi=dpi,
         facecolor=fig.get_facecolor(),
         transparent=True,
     )
     plt.close(fig)
+    # this might have already fixed my problem, unit testing FTW
+    del fig
+    # this was recommended here to remove fig from memory, can it help with
+    # the problem with dask processing?
+    gc.collect(2)
+    # for now I just want to wipe ALL. This might impact performance?
 
 
 def _check_ffmpeg_version():
@@ -72,11 +79,13 @@ def _check_ffmpeg_version():
     return found
 
 
-def _combine_ffmpeg_command(sourcefolder, moviename, pattern="frame_%05d.png"):
+def _combine_ffmpeg_command(
+    sourcefolder, moviename, frame_pattern="frame_%05d.png"
+):
     options = " -y -c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p -framerate 20"
     # we need `-y` because i can not properly diagnose the errors here...
-    command = 'ffmpeg -i "%s" %s %s' % (
-        os.path.join(sourcefolder, pattern),
+    command = 'ffmpeg -i "%s" %s "%s"' % (
+        os.path.join(sourcefolder, frame_pattern),
         options,
         moviename,
     )
@@ -161,7 +170,7 @@ def convert_gif(
 def write_movie(
     sourcefolder,
     moviename,
-    pattern="frame_%05d.png",
+    frame_pattern="frame_%05d.png",
     remove_frames=True,
     verbose=False,
     overwrite_existing=False,
@@ -173,13 +182,15 @@ def write_movie(
                 "File `%s` already exists. Set `overwrite_existing` to True to overwrite."
                 % (path)
             )
-    command = _combine_ffmpeg_command(sourcefolder, moviename, pattern=pattern)
+    command = _combine_ffmpeg_command(
+        sourcefolder, moviename, frame_pattern=frame_pattern
+    )
     p = _check_ffmpeg_execute(command, verbose=verbose)
 
     print("Movie created at %s" % (moviename))
     if remove_frames:
         try:
-            rem_name = pattern.replace("%05d", "*")
+            rem_name = frame_pattern.replace("%05d", "*")
             for f in glob.glob(os.path.join(sourcefolder, rem_name)):
                 os.remove(f)
         except:
@@ -215,6 +226,10 @@ class Movie:
         ##
         # add kwargs to plotfunc
         # Check input
+        if self.framedim not in list(self.data.dims):
+            raise ValueError(
+                "Framedim (%s) not found in input data" % self.framedim
+            )
 
     def preview(self, timestep):
         """Creates preview frame of movie Class.
@@ -229,7 +244,7 @@ class Movie:
         matplotlib.figure
 
         """
-        fig = frame(self.pixelwidth, self.pixelheight, self.dpi)
+        fig = create_frame(self.pixelwidth, self.pixelheight, self.dpi)
         self.plotfunc(self.data, fig, timestep, **self.kwargs)
         return fig
 
@@ -254,7 +269,11 @@ class Movie:
         for fi in frame_range:
             fig = self.preview(fi)
             frame_save(
-                fig, fi, odir=odir, pattern=self.frame_pattern, dpi=self.dpi
+                fig,
+                fi,
+                odir=odir,
+                frame_pattern=self.frame_pattern,
+                dpi=self.dpi,
             )
 
     def save(
@@ -309,7 +328,7 @@ class Movie:
         write_movie(
             dirname,
             moviefile,
-            pattern=self.frame_pattern,
+            frame_pattern=self.frame_pattern,
             remove_frames=remove_frames,
             verbose=verbose,
             overwrite_existing=overwrite_existing,

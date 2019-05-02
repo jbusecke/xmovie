@@ -6,10 +6,10 @@ dependencies:
   - xarray
   - dask
   - numpy > 1.13
-  - pytest
+  - pytest >= 4
   - future
   - matplotlib
-  - cartopy
+  - cartopy >= 0.17
   - ffmpeg
   - pip:
     - codecov

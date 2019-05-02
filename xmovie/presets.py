@@ -74,7 +74,7 @@ def _core_plot(ax, data, plotmethod=None, **kwargs):
 def _smooth_boundary_NearsidePerspective(
     central_longitude=0.0,
     central_latitude=0.0,
-    satellite_height=35785831,
+    satellite_height=35_785_831,
     false_easting=0,
     false_northing=0,
     globe=None,

@@ -184,7 +184,7 @@ def rotating_globe(
     lat_rotations=0.05,
     land=False,
     coastline=True,
-    **kwargs,
+    **kwargs
 ):
 
     # rotate lon_rotations times throughout movie and start at lon_start
@@ -248,7 +248,7 @@ def rotating_globe_dark(
     lat_rotations=0.05,
     land=False,
     coastline=True,
-    **kwargs,
+    **kwargs
 ):
 
     # split kwargs out

@@ -6,7 +6,7 @@ dependencies:
   - xarray
   - dask
   - numpy > 1.13
-  - pytest
+  - pytest >= 4.4
   - future
   - matplotlib
   - cartopy

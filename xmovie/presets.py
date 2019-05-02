@@ -94,7 +94,7 @@ def _smooth_boundary_NearsidePerspective(
     # Re-implement the cartopy code to figure out the boundary.
 
     # This is just really a guess....
-    WGS84_SEMIMAJOR_AXIS = 6378137.0
+    WGS84_SEMIMAJOR_AXIS = 6_378_137.0
     # because I cannot import it above...this should be fixed upstream
     # anyways...
 
@@ -143,7 +143,7 @@ def _smooth_boundary_globe(projection):
     # (https://github.com/SciTools/cartopy/issues/613)
 
     # Re-implement the cartopy code to figure out the boundary.
-    a = np.float(projection.globe.semimajor_axis or 6378137.0)
+    a = np.float(projection.globe.semimajor_axis or 6_378_137.0)
     b = np.float(projection.globe.semiminor_axis or a)
     coords = ccrs._ellipse_boundary(a * 0.99999, b * 0.99999, n=361)
 
@@ -181,7 +181,7 @@ def rotating_globe(
     lat_rotations=0.05,
     land=False,
     coastline=True,
-    **kwargs
+    **kwargs,
 ):
 
     # rotate lon_rotations times throughout movie and start at lon_start
@@ -199,17 +199,11 @@ def rotating_globe(
 
     # mapping style kwargs
     map_style_kwargs = dict(transform=ccrs.PlateCarree())
+    kwargs.update(map_style_kwargs)
 
     data = check_input(da, plot_variable)
 
-    _base_plot(
-        ax,
-        data,
-        timestamp,
-        plotmethod=plotmethod,
-        **kwargs,
-        **map_style_kwargs
-    )
+    _base_plot(ax, data, timestamp, plotmethod=plotmethod, **kwargs)
     ax.set_title("")
     ax.set_global()
     # the order should be optional? (I can pass z_order for each...)
@@ -251,7 +245,7 @@ def rotating_globe_dark(
     lat_rotations=0.05,
     land=False,
     coastline=True,
-    **kwargs
+    **kwargs,
 ):
 
     # split kwargs out
@@ -273,7 +267,7 @@ def rotating_globe_dark(
 
     # mapping style kwargs
     map_style_kwargs = dict(transform=ccrs.PlateCarree())
-
+    kwargs.update(map_style_kwargs)
     data = check_input(da, plot_variable)
 
     # the order should be optional? (I can pass z_order for each...)
@@ -295,14 +289,7 @@ def rotating_globe_dark(
 
     ax.background_patch.set_facecolor("k")
 
-    pp = _base_plot(
-        ax,
-        data,
-        timestamp,
-        plotmethod=plotmethod,
-        **kwargs,
-        **map_style_kwargs
-    )
+    pp = _base_plot(ax, data, timestamp, plotmethod=plotmethod, **kwargs)
 
     _set_bgcolor(fig, ax, pp)
     ax.set_global()

@@ -1,5 +1,9 @@
 from __future__ import print_function
-from future.utils import iteritems
+
+# from future.utils import iteritems
+import matplotlib as mpl
+
+mpl.use("Agg")
 
 import re
 import os
@@ -10,11 +14,6 @@ import gc
 
 from .presets import rotating_globe_dark
 from subprocess import Popen, PIPE, STDOUT
-
-
-import matplotlib as mpl
-
-mpl.use("Agg")
 import matplotlib.pyplot as plt
 
 try:

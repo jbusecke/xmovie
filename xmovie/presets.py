@@ -8,6 +8,9 @@ import cartopy.feature as cfeature
 import shapely.geometry as sgeom
 import matplotlib.pyplot as plt
 
+from __future__ import print_function
+from future.utils import iteritems
+
 
 def get_plot_defaults(da):
     if isinstance(da, xr.DataArray):

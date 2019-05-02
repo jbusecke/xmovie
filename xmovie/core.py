@@ -7,6 +7,8 @@ import gc
 
 from .presets import rotating_globe_dark
 from subprocess import Popen, PIPE, STDOUT
+from __future__ import print_function
+from future.utils import iteritems
 
 import matplotlib as mpl
 

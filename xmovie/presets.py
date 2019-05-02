@@ -97,7 +97,7 @@ def _smooth_boundary_NearsidePerspective(
     # Re-implement the cartopy code to figure out the boundary.
 
     # This is just really a guess....
-    WGS84_SEMIMAJOR_AXIS = 6_378_137.0
+    WGS84_SEMIMAJOR_AXIS = 6378137.0
     # because I cannot import it above...this should be fixed upstream
     # anyways...
 
@@ -146,7 +146,7 @@ def _smooth_boundary_globe(projection):
     # (https://github.com/SciTools/cartopy/issues/613)
 
     # Re-implement the cartopy code to figure out the boundary.
-    a = np.float(projection.globe.semimajor_axis or 6_378_137.0)
+    a = np.float(projection.globe.semimajor_axis or 6378137.0)
     b = np.float(projection.globe.semiminor_axis or a)
     coords = ccrs._ellipse_boundary(a * 0.99999, b * 0.99999, n=361)
 

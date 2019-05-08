@@ -35,9 +35,11 @@ def test_frame_save(tmpdir, frame, frame_pattern, dpi, w, h):
     # Create Figure
     # fig = plt.figure()
     fig = create_frame(w, h, dpi)
-    frame_save(fig, frame, odir=tmpdir, frame_pattern=frame_pattern, dpi=dpi)
-    filename = tmpdir.join(frame_pattern % frame)
-    img = Image.open(filename.strpath)
+    frame_save(
+        fig, frame, odir=tmpdir.strpath, frame_pattern=frame_pattern, dpi=dpi
+    )
+    filename = tmpdir.strpath.join(frame_pattern % frame)
+    img = Image.open(filename)
     pixel_w, pixel_h = img.size
     # # Check if figure was properly closed
     assert filename.exists()
@@ -111,21 +113,23 @@ def test_write_movie_gif(
     da = test_dataarray()
     mov = Movie(da, frame_pattern=frame_pattern)
     mov.save_frames(tmpdir.strpath)
-    mpath = tmpdir.join(moviename)
-    ppath = tmpdir.join(palettename)
-    gpath = tmpdir.join(gifname)
-    filenames = [tmpdir.join(frame_pattern % ff) for ff in range(len(da.time))]
+    mpath = tmpdir.strpath.join(moviename)
+    ppath = tmpdir.strpath.join(palettename)
+    gpath = tmpdir.strpath.join(gifname)
+    filenames = [
+        tmpdir.strpath.join(frame_pattern % ff) for ff in range(len(da.time))
+    ]
     write_movie(
         tmpdir.strpath,
-        mpath.strpath,
+        mpath,
         frame_pattern=frame_pattern,
         remove_frames=remove_frames,
     )
-    create_gif_palette(mpath.strpath, ppath.strpath)
+    create_gif_palette(mpath, ppath)
     convert_gif(
-        mpath.strpath,
-        gpath=gpath.strpath,
-        ppath=ppath.strpath,
+        mpath,
+        gpath=gpath,
+        ppath=ppath,
         remove_movie=remove_movie,
         remove_palette=remove_palette,
     )

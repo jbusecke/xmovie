@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 import xarray as xr
 import cartopy.crs as ccrs
@@ -26,7 +27,10 @@ def check_input(da, fieldname):
     if isinstance(da, xr.Dataset):
         if fieldname is None:
             fieldname = list(da.data_vars)[0]
-            print("No plot_variable supplied. Defaults to `%s`" % fieldname)
+            warnings.warn(
+                "No plot_variable supplied. Defaults to `%s`" % fieldname,
+                UserWarning,
+            )
         data = da[fieldname]
     elif isinstance(da, xr.DataArray):
         data = da
@@ -195,17 +199,11 @@ def rotating_globe(
 
     # mapping style kwargs
     map_style_kwargs = dict(transform=ccrs.PlateCarree())
+    kwargs.update(map_style_kwargs)
 
     data = check_input(da, plot_variable)
 
-    _base_plot(
-        ax,
-        data,
-        timestamp,
-        plotmethod=plotmethod,
-        **kwargs,
-        **map_style_kwargs
-    )
+    _base_plot(ax, data, timestamp, plotmethod=plotmethod, **kwargs)
     ax.set_title("")
     ax.set_global()
     # the order should be optional? (I can pass z_order for each...)
@@ -269,7 +267,7 @@ def rotating_globe_dark(
 
     # mapping style kwargs
     map_style_kwargs = dict(transform=ccrs.PlateCarree())
-
+    kwargs.update(map_style_kwargs)
     data = check_input(da, plot_variable)
 
     # the order should be optional? (I can pass z_order for each...)
@@ -291,14 +289,7 @@ def rotating_globe_dark(
 
     ax.background_patch.set_facecolor("k")
 
-    pp = _base_plot(
-        ax,
-        data,
-        timestamp,
-        plotmethod=plotmethod,
-        **kwargs,
-        **map_style_kwargs
-    )
+    pp = _base_plot(ax, data, timestamp, plotmethod=plotmethod, **kwargs)
 
     _set_bgcolor(fig, ax, pp)
     ax.set_global()

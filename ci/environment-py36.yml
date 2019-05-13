@@ -1,0 +1,16 @@
+name: test_env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.6
+  - xarray
+  - dask
+  - numpy
+  - pytest
+  - future
+  - matplotlib
+  - cartopy
+  - ffmpeg
+  - pip:
+    - codecov
+    - pytest-cov

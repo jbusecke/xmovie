@@ -1,10 +1,6 @@
-from __future__ import print_function
-
-# from future.utils import iteritems
 import matplotlib as mpl
 
 mpl.use("Agg")
-
 import re
 import os
 import sys
@@ -50,13 +46,12 @@ def frame_save(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100):
         facecolor=fig.get_facecolor(),
         transparent=True,
     )
+    # I am trying everything to *wipe* this figure, hoping that it could
+    # help with the dask glitches I experienced earlier.
+    # TBD if this is all needed...how this might affect performance.
     plt.close(fig)
-    # this might have already fixed my problem, unit testing FTW
     del fig
-    # this was recommended here to remove fig from memory, can it help with
-    # the problem with dask processing?
     gc.collect(2)
-    # for now I just want to wipe ALL. This might impact performance?
 
 
 def _check_ffmpeg_version():
@@ -90,7 +85,7 @@ def _combine_ffmpeg_command(
     command = 'ffmpeg -i "%s" %s "%s"' % (
         os.path.join(sourcefolder, frame_pattern),
         options,
-        moviename,
+        os.path.join(sourcefolder, moviename),
     )
     return command
 
@@ -132,24 +127,32 @@ def _check_ffmpeg_execute(command, verbose=False):
             )
 
 
-def create_gif_palette(mpath, ppath="palette.png", verbose=False):
-    command = "ffmpeg -y -i %s -vf palettegen %s" % (mpath, ppath)
-    p = _check_ffmpeg_execute(command, verbose=verbose)
-    return p
+# def create_gif_palette(mpath, ppath="palette.png", verbose=False):
+#     command = "ffmpeg -y -i %s -vf palettegen %s" % (mpath, ppath)
+#     p = _check_ffmpeg_execute(command, verbose=verbose)
+#     return p
 
 
 def convert_gif(
     mpath,
     gpath="movie.gif",
-    ppath="palette.png",
+    gif_palette=False,
     resolution=[480, 320],
     verbose=False,
     remove_movie=True,
-    remove_palette=True,
 ):
-    command = (
-        "ffmpeg -y -i %s -i %s -filter_complex paletteuse -r 10 -s %ix%i %s"
-        % (mpath, ppath, resolution[0], resolution[1], gpath)
+
+    if gif_palette:
+        palette_filter = '-filter_complex "[0:v] split [a][b];[a] palettegen [p];[b][p] paletteuse"'
+    else:
+        palette_filter = ""
+
+    command = "ffmpeg -y -i %s %s -r 5 -s %ix%i %s" % (
+        mpath,
+        palette_filter,
+        resolution[0],
+        resolution[1],
+        gpath,
     )
     p = _check_ffmpeg_execute(command, verbose=verbose)
 
@@ -159,13 +162,6 @@ def convert_gif(
             os.remove(mpath)
         except:
             warnings.warn("movie removal failed")
-            pass
-
-    if remove_palette:
-        try:
-            os.remove(ppath)
-        except:
-            warnings.warn("palette removal failed")
             pass
     return p
 
@@ -234,6 +230,24 @@ class Movie:
                 "Framedim (%s) not found in input data" % self.framedim
             )
 
+    def render_frame(self, timestep):
+        """renders complete figure (frame) for given timestep.
+
+        Parameters
+        ----------
+        timestep : type
+            Description of parameter `timestep`.
+
+        Returns
+        -------
+        type
+            Description of returned object.
+
+        """
+        fig = create_frame(self.pixelwidth, self.pixelheight, self.dpi)
+        self.plotfunc(self.data, fig, timestep, **self.kwargs)
+        return fig
+
     def preview(self, timestep):
         """Creates preview frame of movie Class.
 
@@ -247,9 +261,7 @@ class Movie:
         matplotlib.figure
 
         """
-        fig = create_frame(self.pixelwidth, self.pixelheight, self.dpi)
-        self.plotfunc(self.data, fig, timestep, **self.kwargs)
-        return fig
+        self.render_frame(timestep)
 
     def save_frames(self, odir, progress=False):
         """Save movie frames as picture files.
@@ -270,7 +282,7 @@ class Movie:
             warnings.warn("Cant show progess bar at this point. Install tqdm")
 
         for fi in frame_range:
-            fig = self.preview(fi)
+            fig = self.render_frame(fi)
             frame_save(
                 fig,
                 fi,
@@ -287,13 +299,16 @@ class Movie:
         progress=False,
         verbose=False,
         overwrite_existing=False,
+        gif_palette=False,
+        gif_resolution_factor=0.5,
     ):
-        """Short summary.
+        """Save out animation from Movie object.
 
         Parameters
         ----------
         filename : str
-            Pathname to final movie/animation.
+            Pathname to final movie/animation. Output is dependent on filetype:
+            Creates movie for `*.mp4` and gif for `*.gif`
         remove_frames : Bool
             Optional removal of frame pictures (the default is True; False will
             leave all picture files in folder).
@@ -304,7 +319,19 @@ class Movie:
             Experimental switch to show progress output. This will be refined
             in future version (the default is False).
         verbose : Bool
-            Switch to show all shell output. Mostly for debugging (the default is False).
+            Experimental switch to show output of ffmpeg commands. Useful for
+            debugging but can quickly flood your notebook
+            (the default is False).
+        overwrite_existing : Bool
+            Set to overwrite existing files with `filename`
+            (the default is False).
+        gif_palette : Bool
+            Use a gif colorpalette to improve quality. Can lead to artifacts
+            in very contrasty situations (the default is False).
+        gif_resolution_factor : float
+            Factor used to reduce gif resolution compared to movie.
+            Use 1.0 to put out the same resolutions for both products.
+            (the default is 0.5).
         """
 
         # parse out directory and filename
@@ -318,7 +345,6 @@ class Movie:
             giffile = filename
             moviefile = filename.replace("gif", "mp4")
             gpath = os.path.join(dirname, giffile)
-            ppath = os.path.join(dirname, "palette.png")
         else:
             moviefile = filename
 
@@ -339,12 +365,13 @@ class Movie:
 
         # Create gif
         if isgif:
-            create_gif_palette(mpath, ppath=ppath, verbose=verbose)
+            # if ppath:
+            #     create_gif_palette(mpath, ppath=ppath, verbose=verbose)
             convert_gif(
                 mpath,
                 gpath=gpath,
-                ppath=ppath,
                 resolution=[480, 320],
+                gif_palette=gif_palette,
                 verbose=verbose,
                 remove_movie=remove_movie,
             )

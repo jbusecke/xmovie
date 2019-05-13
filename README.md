@@ -16,85 +16,67 @@ present a hassle.
 The main aims of this module are:
 
 - Enable quick but high quality movie frame creation from existing xarray
-objects with preset plot functions.
+objects with preset plot functions - create a movie with only 2 lines of code.
 - Convert your static plot workflow to a movie with only a few lines of code, while maintaining all the flexibility of [xarray](https://github.com/pydata/xarray) and [matplotlib](https://matplotlib.org/).
 
 
 <!-- - Use [dask](https://github.com/dask/dask) for computationally efficient
-frame rendering.
-- WIP: Use [ffmpeg](https://www.ffmpeg.org/) to enable movie rendering from dataset
-to finished movie file in jupyter notebooks (my preferred workflow). -->
+frame rendering.-->
 
 ## Installation
 Clone this repository with `$ git clone git@github.com:jbusecke/xmovie.git` and
-install it from source `$ python setup.py install`
+install it from source `$ python setup.py install`.
+Pip and conda distributions will be available soon.
 
 >If you dont have [ssh keys](https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account) set up, you can use `$ git clone https://github.com/jbusecke/xmovie.git` and enter your github password.
 
-## Presets for quick movies
-Using the presets of __xmovie__ making a movie is very easy:
+## Quickstart
+Making high quality movies and gifs can be created with only a few lines
 
 ```python
+import xarray as xr
 from xmovie import Movie
-from xmovie.presets import rotating_globe_dark
 
-ds = xr.tutorial.open_dataset('air_temperature').load().isel(time=slice(0,150))
-mov = Movie(ds)
+ds = xr.tutorial.open_dataset('air_temperature').isel(time=slice(0,150))
+mov = Movie(ds.air)
+mov.save('movie.mp4')
 ```
 
+Saving a `.gif` is as easy as changing the filename:
+```python
+mov.save('movie.gif')
+```
+That is it! Now pat yourself on the shoulder and enjoy your masterpiece.
+!['spin spin spin'](docs/gifs/movie.gif)
+
+> The gif is created by first rendering a movie and then converting it to a gif.
+If you want to keep both outputs you can simply do `mov.save('movie.gif', remove_movie=False)`
+
+<!-- ## Presets for quick movies
+Using the presets of __xmovie__ making a movie is very easy: -->
+
+## Preview movie frames
 Preview single frames in the movie with the `Movie.preview` function:
 ```
 # preview 10th frame
-mov.preview(10);
+mov.preview(10)
 # preview 100th frame. Note the rotation
-mov.preview(100);
+mov.preview(100)
 ```
 !['10th frame'](docs/pics/preview1.png)!['100th frame'](docs/pics/preview2.png)
-
-and save out each frame as a picture
-```
-mov.save('.') # saves to current directory
-```
-
-### Convert images to movies
-In the commandline you can now convert the frames to a movie file using [ffmpeg]()
-
-```
-$ ffmpeg -y -i "frame_%05d.png" -c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p -framerate 20 movie.mp4
-```
-> from a notebook simply use a `!` before the command to execute a shell command:
-```
-# convert to movie file
-! ffmpeg -y -i "frame_%05d.png" -c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p -framerate 20 movie.mp4
-```
-
-### Convert to gif
-To convert your movie file into a gif do
-```
-# convert to gif
-! ffmpeg -y -i movie.mp4 -vf palettegen palette.png
-! ffmpeg -y -i movie.mp4 -i palette.png -filter_complex paletteuse -r 10 -s 480x320 movie.gif
-```
-
-Just clean up all the image files
-```
-!rm *.png
-```
-and enjoy your masterpiece.
-
-!['spin spin spin'](docs/gifs/movie.gif)
 
 ## Modify plots
 The preset plot-functions each have a unique set of keyword arguments for custom looks, but they all support the `xarray` plotting modes via the `plotmethod` keyword:
 ```
-mov = Movie(ds, rotating_globe_dark, plotmethod='contourf', coastline=False, land=True)
-mov.save('.')
+from xmovie.presets import rotating_globe_dark  # the default preset
+mov = Movie(ds.air, rotating_globe_dark, plotmethod='contourf', coastline=False, land=True)
+mov.save('movie_contf.gif')
 ```
 !['spin spin spin'](docs/gifs/movie_contf.gif)
 
 ```
 mov = Movie(ds, rotating_globe_dark, plotmethod='contour', coastline=False, land=True)
-mov.save('.')
+mov.save('movie_cont.gif')
 ```
 !['spin spin spin'](docs/gifs/movie_cont.gif)
 
@@ -111,11 +93,10 @@ mov = Movie(ds, rotating_globe_dark,
             y='yc', #accepts keyword arguments from the xarray plotting interface
             lat_start=45, # Custom keywords from `rotating_globe_dark
             lon_rotations=0.2)
-mov.save('.')
+mov.save('movie_rasm.gif')
 ```
 
 !['rasm_spinning'](docs/gifs/movie_rasm.gif)
-
 
 
 ### Custom Plots
@@ -126,8 +107,10 @@ Take this example:
 ```
 # some awesome static plot
 import matplotlib.pyplot as plt
+
+ds = xr.tutorial.open_dataset('rasm').Tair
 fig = plt.figure(figsize=[10,5])
-tt = 40
+tt = 30
 
 station = dict(x=100, y=150)
 ds_station = ds.sel(**station)
@@ -136,17 +119,17 @@ ds_station = ds.sel(**station)
 ds.isel(time=tt).plot(ax=ax1)
 ax1.plot(station['x'], station['y'], marker='*', color='k' ,markersize=15)
 ax1.text(station['x']+4, station['y']+4, 'Station', color='k' )
-ds_station.isel(time=slice(0,tt)).plot(ax=ax2)
-
-ax2.set_xlim(ds.time.min(), ds.time.max())
-ax2.set_ylim(ds_station.min(), ds_station.max())
-
 ax1.set_aspect(1)
 ax1.set_facecolor('0.5')
-ax2.set_aspect(0.2)
 ax1.set_title('');
+
+# Time series
+ds_station.isel(time=slice(0,tt+1)).plot.line(ax=ax2, x='time')
+ax2.set_xlim(ds.time.min().data, ds.time.max().data)
+ax2.set_ylim(ds_station.min(), ds_station.max())
 ax2.set_title('Data at station');
-fig.subplots_adjust(wspace=0.4)
+
+fig.subplots_adjust(wspace=0.6)
 ```
 
 !['static_example'](docs/pics/static.png)
@@ -155,33 +138,32 @@ All that is needed to wrap this into a function with the signature `func(ds, fig
 
 ```
 def custom_plotfunc(ds, fig, tt):
+    # Define station location for timeseries
     station = dict(x=100, y=150)
     ds_station = ds.sel(**station)
 
     (ax1, ax2) = fig.subplots(ncols=2)
 
+    # Map axis
     # Colorlimits need to be fixed or your video is going to cause seizures.
     # This is the only modification from the code above!
     ds.isel(time=tt).plot(ax=ax1, vmin=ds.min(), vmax=ds.max(), cmap='RdBu_r')
-     
     ax1.plot(station['x'], station['y'], marker='*', color='k' ,markersize=15)
     ax1.text(station['x']+4, station['y']+4, 'Station', color='k' )
-    ds_station.isel(time=slice(0,tt)).plot(ax=ax2)
-
-    ax2.set_xlim(ds.time.min(), ds.time.max())
-    ax2.set_ylim(ds_station.min(), ds_station.max())
-
     ax1.set_aspect(1)
     ax1.set_facecolor('0.5')
-    ax2.set_aspect(0.2)
     ax1.set_title('');
+
+    # Time series
+    ds_station.isel(time=slice(0,tt+1)).plot.line(ax=ax2, x='time')
+    ax2.set_xlim(ds.time.min().data, ds.time.max().data)
+    ax2.set_ylim(ds_station.min(), ds_station.max())
     ax2.set_title('Data at station');
+
     fig.subplots_adjust(wspace=0.4)
 
-mov_custom = Movie(ds, custom_plotfunc)
-mov_custom.preview(2)
+dss = xr.tutorial.open_dataset('rasm').Tair
+mov_custom = Movie(dss, custom_plotfunc)
+mov_custom.save('movie_custom.gif')
 ```
 !['sweet_custom_plots'](docs/gifs/movie_custom.gif)
-
-> Note: This animation looks terrible as a gif if using the suggested settings
-> above. Instead use `! ffmpeg -y -i {moviename}.mp4 {moviename}.gif`

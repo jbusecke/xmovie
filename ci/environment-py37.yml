@@ -11,6 +11,8 @@ dependencies:
   - matplotlib
   - cartopy
   - ffmpeg
+  - opencv
+  - tqdm
   - pip:
     - codecov
     - pytest-cov

@@ -1,6 +1,4 @@
 import matplotlib as mpl
-
-mpl.use("Agg")
 import re
 import os
 import sys
@@ -10,7 +8,12 @@ import gc
 
 from .presets import rotating_globe_dark
 from subprocess import Popen, PIPE, STDOUT
+import dask.bag as db
+from dask.diagnostics import ProgressBar
+
+mpl.use("Agg")
 import matplotlib.pyplot as plt
+
 
 try:
     from tqdm import tqdm
@@ -24,7 +27,6 @@ except:
     tqdm_avail = False
 
 # import xarray as xr
-# import dask.bag as db
 
 
 # is it a good idea to set these here?
@@ -125,12 +127,6 @@ def _check_ffmpeg_execute(command, verbose=False):
             raise RuntimeError(
                 "Something has gone wrong. Use `verbose=True` to check if ffmpeg displays a problem"
             )
-
-
-# def create_gif_palette(mpath, ppath="palette.png", verbose=False):
-#     command = "ffmpeg -y -i %s -vf palettegen %s" % (mpath, ppath)
-#     p = _check_ffmpeg_execute(command, verbose=verbose)
-#     return p
 
 
 def convert_gif(
@@ -263,15 +259,15 @@ class Movie:
         """
         self.render_frame(timestep)
 
-    def save_frames(self, odir, progress=False):
+    def save_frames_serial(self, odir, progress=False):
         """Save movie frames as picture files.
 
         Parameters
         ----------
         odir : path
             path to output directory
-        progress : type
-            Show progress bar. Requires
+        progress : bool
+            Show progress bar. Requires tqmd.
 
         """
         # create range of frames
@@ -291,11 +287,41 @@ class Movie:
                 dpi=self.dpi,
             )
 
+    def dask_frame_wrapper(self, tt, odir=None):
+        fig = self.render_frame(tt)
+        frame_save(
+            fig, tt, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
+        )
+
+    def save_frames_parallel(self, odir, partition_size=5, progress=False):
+        """Save movie frames out to file.
+
+        Parameters
+        ----------
+        odir : path
+            path to output directory
+        progress : bool
+            Show progress bar. Requires tqmd.
+
+        """
+        frame_range = range(len(self.data[self.framedim].data))
+        frame_bag = db.from_sequence(
+            frame_range, partition_size=partition_size
+        )
+        mapped_frame_bag = frame_bag.map(self.dask_frame_wrapper, odir=odir)
+        if progress:
+            with ProgressBar():
+                mapped_frame_bag.compute(processes=False)
+        else:
+            mapped_frame_bag.compute(processes=False)
+
     def save(
         self,
         filename,
         remove_frames=True,
         remove_movie=True,
+        parallel=False,
+        partition_size=5,
         progress=False,
         verbose=False,
         overwrite_existing=False,
@@ -315,6 +341,10 @@ class Movie:
         remove_movie : Bool
             As `remove_frames` but for movie file. Only applies when filename
             is given as `.gif` (the default is True).
+        parallel : Bool
+            Option to save frames in parallel (the default is False)
+        partition_size : int
+            Partition size for parallel saving (the default is 5)
         progress : Bool
             Experimental switch to show progress output. This will be refined
             in future version (the default is False).
@@ -351,7 +381,12 @@ class Movie:
         mpath = os.path.join(dirname, moviefile)
 
         # print frames
-        self.save_frames(dirname, progress=progress)
+        if parallel:
+            self.save_frames_parallel(
+                dirname, progress=progress, partition_size=partition_size
+            )
+        else:
+            self.save_frames_serial(dirname, progress=progress)
 
         # Create movie
         write_movie(
@@ -375,46 +410,3 @@ class Movie:
                 verbose=verbose,
                 remove_movie=remove_movie,
             )
-
-    # def save_parallel(
-    #     self, odir, da, plotfunc, framedim, partition_size=5, func_kwargs={}
-    # ):
-    #     """Save movie frames out to file.
-    #
-    #     Parameters
-    #     ----------
-    #     odir : path
-    #         path to output directory
-    #     da : xr.Dataset/xr.DataArray
-    #         Input xarray object.
-    #     plotfunc : func
-    #         plotting function.
-    #     framedim : type
-    #         Dimension of `da` which represents the frames (e.g. time).
-    #     partition_size : type
-    #         Size of dask bags to be computed in parallel (the default is 20).
-    #     func_kwargs : dict
-    #         optional arguments passed to func (the default is {}).
-    #
-    #     Returns
-    #     -------
-    #     type
-    #         Description of returned object.
-    #
-    #     """
-    #     if isinstance(da, xr.DataArray):
-    #         dummy_data = da
-    #     elif isinstance(da, xr.Dataset):
-    #         dummy_data = da[list(da.data_vars)[0]]
-    #     else:
-    #         raise ValueError("Input has to be xarray object. Is %s" % type(da))
-    #
-    #     frames = range(len(dummy_data[framedim].data))
-    #     frame_bag = db.from_sequence(frames, partition_size=partition_size)
-    #     frame_bag.map(
-    #         self.frame_save,
-    #         odir=odir,
-    #         da=da,
-    #         plotfunc=plotfunc,
-    #         func_kwargs=func_kwargs,
-    #     ).compute(processes=False)

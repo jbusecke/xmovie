@@ -15,6 +15,7 @@ from PIL import Image
 import numpy as np
 import xarray as xr
 import os
+import cv2
 
 
 @pytest.mark.parametrize("w", [400, 1024, 4000])
@@ -104,7 +105,7 @@ def test_movie_write_movie(tmpdir, moviename, remove_frames):
 
     da = test_dataarray()
     mov = Movie(da)
-    mov.save_frames(tmpdir)
+    mov.save_frames_serial(tmpdir)
     filenames = [tmpdir.join(frame_pattern % ff) for ff in range(len(da.time))]
     write_movie(tmpdir, moviename, remove_frames=remove_frames)
 
@@ -127,7 +128,7 @@ def test_convert_gif(tmpdir, moviename, remove_movie, gif_palette, gifname):
 
     da = test_dataarray()
     mov = Movie(da)
-    mov.save_frames(tmpdir)
+    mov.save_frames_serial(tmpdir)
 
     write_movie(tmpdir, moviename)
 
@@ -183,22 +184,86 @@ def test_Movie(
 
 
 @pytest.mark.parametrize("frame_pattern", ["frame_%05d.png", "test%05d.png"])
-def test_movie_save_frames(tmpdir, frame_pattern):
+def test_movie_save_frames_serial(tmpdir, frame_pattern):
     da = test_dataarray()
     mov = Movie(da, frame_pattern=frame_pattern)
-    mov.save_frames(tmpdir)
+    mov.save_frames_serial(tmpdir)
     filenames = [tmpdir.join(frame_pattern % ff) for ff in range(len(da.time))]
     assert all([fn.exists() for fn in filenames])
 
 
+def compare_images(impath1, impath2):
+    # Check if two images as the same (pixel by pixel)
+    im1 = cv2.imread(impath1)
+    im2 = cv2.imread(impath2)
+    if im1.shape == im2.shape:
+        difference = cv2.subtract(im1, im2)
+        b, g, r = cv2.split(difference)
+        if (
+            cv2.countNonZero(b) == 0
+            and cv2.countNonZero(g) == 0
+            and cv2.countNonZero(r) == 0
+        ):
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+# TODO: parametrize all kinds of options for plotting...
+
+
+@pytest.mark.parametrize("progress", [False, True])
+@pytest.mark.parametrize("partition_size", [1, 5])
+def test_movie_save_frames_parallel(tmpdir, progress, partition_size):
+
+    # da = test_dataarray() # THis is not long enugh to produce those weird glitches
+
+    # need a longer
+    da = xr.tutorial.open_dataset("air_temperature").air.isel(
+        time=slice(0, 10)
+    )
+
+    frame_pattern_ser = "frame_ser_%05d.png"
+    frame_pattern_par = "frame_par_%05d.png"
+
+    mov_ser = Movie(da, frame_pattern=frame_pattern_ser)
+    mov_par = Movie(da, frame_pattern=frame_pattern_par)
+
+    mov_ser.save_frames_serial(tmpdir, progress=progress)
+    mov_par.save_frames_parallel(
+        tmpdir, progress=progress, partition_size=partition_size
+    )
+
+    filenames_ser = [
+        tmpdir.join(frame_pattern_ser % ff) for ff in range(len(da.time))
+    ]
+    assert all([fn.exists() for fn in filenames_ser])
+    filenames_par = [
+        tmpdir.join(frame_pattern_par % ff) for ff in range(len(da.time))
+    ]
+    assert all([fn.exists() for fn in filenames_par])
+
+    print(filenames_ser[0])
+    print(filenames_par[0])
+    assert all(
+        [
+            compare_images(a.strpath, b.strpath)
+            for a, b in zip(filenames_ser, filenames_par)
+        ]
+    )
+
+
 @pytest.mark.parametrize("filename", ["movie.mp4", "movie.gif"])
 @pytest.mark.parametrize("gif_palette", [True, False])
-def test_movie_save(tmpdir, filename, gif_palette):
+@pytest.mark.parametrize("parallel", [True, False])
+def test_movie_save(tmpdir, filename, gif_palette, parallel):
     # Need more tests for progress, verbose, overwriting
     path = tmpdir.join(filename)
     da = test_dataarray()
     mov = Movie(da)
-    mov.save(path.strpath, gif_palette=gif_palette)
+    mov.save(path.strpath, gif_palette=gif_palette, parallel=parallel)
 
     assert path.exists()
     # I should also check if no other files were created. For later

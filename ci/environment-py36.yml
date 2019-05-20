@@ -10,7 +10,7 @@ dependencies:
   - future
   - matplotlib
   - cartopy
-  - ffmpeg
+  - ffmpeg=3.4
   - pip:
     - codecov
     - pytest-cov

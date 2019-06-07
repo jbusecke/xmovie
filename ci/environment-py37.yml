@@ -9,7 +9,7 @@ dependencies:
   - pytest
   - future
   - matplotlib
-  - cartopy
+  - cartopy>0.17.0
   - ffmpeg
   - pip:
     - codecov

@@ -1,4 +1,5 @@
 from xmovie.core import (
+    _check_plotfunc_output,
     create_frame,
     _combine_ffmpeg_command,
     _execute_command,
@@ -8,13 +9,26 @@ from xmovie.core import (
     convert_gif,
     Movie,
 )
-from xmovie.presets import rotating_globe_dark, rotating_globe
+from xmovie.presets import basic, rotating_globe
 import pytest
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
 import xarray as xr
 import os
+
+
+def dummy_plotfunc(da, fig, timestep):
+    # a very simple plotfunc, which might be passed by the user
+    ax = fig.subplots()
+    da.isel(time=timestep).plot(ax=ax)
+
+
+def test_check_plotfunc_output():
+    da = xr.DataArray(np.random.rand(40, 60, 7), dims=["x", "y", "time"])
+    assert _check_plotfunc_output(dummy_plotfunc, da) == 0
+    assert _check_plotfunc_output(basic, da) == 2
+    # TODO: I should loop over all presets with this test to ensure consistency
 
 
 @pytest.mark.parametrize("w", [400, 1024, 4000])
@@ -57,7 +71,9 @@ def test_check_ffmpeg_version():
 )
 @pytest.mark.parametrize("frame_pattern", ["frame_%05d.png", "test%05d.png"])
 def test_combine_ffmpeg_command(dir, fname, path, frame_pattern):
-    fixed_options = " -y -c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p -framerate 20"
+    fixed_options = (
+        " -y -c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p -framerate 20"
+    )
     cmd = _combine_ffmpeg_command(dir, fname, frame_pattern=frame_pattern)
     assert cmd == 'ffmpeg -i "%s" %s "%s"' % (
         os.path.join(dir, frame_pattern),
@@ -131,9 +147,7 @@ def test_convert_gif(tmpdir, moviename, remove_movie, gif_palette, gifname):
 
     write_movie(tmpdir, moviename)
 
-    convert_gif(
-        mpath, gpath=gpath, gif_palette=gif_palette, remove_movie=remove_movie
-    )
+    convert_gif(mpath, gpath=gpath, gif_palette=gif_palette, remove_movie=remove_movie)
 
     if remove_movie:
         assert ~m.exists()
@@ -153,10 +167,8 @@ def test_convert_gif(tmpdir, moviename, remove_movie, gif_palette, gifname):
 # combine them and also add str specs like 'HD' '1080' '4k'
 @pytest.mark.parametrize("framedim", ["time", "x", "wrong"])
 @pytest.mark.parametrize("dpi", [50, 200])
-@pytest.mark.parametrize("plotfunc", [None, rotating_globe])
-def test_Movie(
-    plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth
-):
+@pytest.mark.parametrize("plotfunc", [None, rotating_globe, dummy_plotfunc])
+def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
     da = test_dataarray()
     kwargs = dict(
         plotfunc=plotfunc,
@@ -173,9 +185,11 @@ def test_Movie(
         mov = Movie(da, **kwargs)
 
         if plotfunc is None:
-            assert mov.plotfunc == rotating_globe_dark
+            assert mov.plotfunc == basic
         else:
             assert mov.plotfunc == plotfunc
+        assert mov.plotfunc_n_outargs == _check_plotfunc_output(mov.plotfunc, mov.data)
+        assert mov.dpi == dpi
         assert mov.framedim == framedim
         assert mov.pixelwidth == pixelwidth
         assert mov.pixelheight == pixelheight

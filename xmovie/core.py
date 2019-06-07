@@ -79,9 +79,7 @@ def _check_ffmpeg_version():
     return found
 
 
-def _combine_ffmpeg_command(
-    sourcefolder, moviename, frame_pattern="frame_%05d.png"
-):
+def _combine_ffmpeg_command(sourcefolder, moviename, frame_pattern="frame_%05d.png"):
     options = " -y -c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p -framerate 20"
     # we need `-y` because i can not properly diagnose the errors here...
     command = 'ffmpeg -i "%s" %s "%s"' % (
@@ -139,7 +137,9 @@ def convert_gif(
 ):
 
     if gif_palette:
-        palette_filter = '-filter_complex "[0:v] split [a][b];[a] palettegen [p];[b][p] paletteuse"'
+        palette_filter = (
+            '-filter_complex "[0:v] split [a][b];[a] palettegen [p];[b][p] paletteuse"'
+        )
     else:
         palette_filter = ""
 
@@ -196,6 +196,7 @@ def write_movie(
 
 
 class Movie:
+    # TODO: docstring
     def __init__(
         self,
         da,
@@ -222,9 +223,7 @@ class Movie:
         # add kwargs to plotfunc
         # Check input
         if self.framedim not in list(self.data.dims):
-            raise ValueError(
-                "Framedim (%s) not found in input data" % self.framedim
-            )
+            raise ValueError("Framedim (%s) not found in input data" % self.framedim)
 
     def render_frame(self, timestep):
         """renders complete figure (frame) for given timestep.
@@ -280,20 +279,21 @@ class Movie:
         for fi in frame_range:
             fig = self.render_frame(fi)
             frame_save(
-                fig,
-                fi,
-                odir=odir,
-                frame_pattern=self.frame_pattern,
-                dpi=self.dpi,
+                fig, fi, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
             )
 
     def dask_frame_wrapper(self, tt, odir=None):
         fig = self.render_frame(tt)
-        frame_save(
-            fig, tt, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
-        )
+        frame_save(fig, tt, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi)
 
-    def save_frames_parallel(self, odir, partition_size=5, progress=False):
+    def save_frames_parallel(
+        self,
+        odir,
+        partition_size=5,
+        progress=False,
+        compute=True,
+        compute_kwargs={"processes": False},
+    ):
         """Save movie frames out to file.
 
         Parameters
@@ -305,15 +305,17 @@ class Movie:
 
         """
         frame_range = range(len(self.data[self.framedim].data))
-        frame_bag = db.from_sequence(
-            frame_range, partition_size=partition_size
-        )
+        frame_bag = db.from_sequence(frame_range, partition_size=partition_size)
         mapped_frame_bag = frame_bag.map(self.dask_frame_wrapper, odir=odir)
-        if progress:
-            with ProgressBar():
-                mapped_frame_bag.compute(processes=False)
+
+        if compute:
+            if progress:
+                with ProgressBar():
+                    mapped_frame_bag.compute(**compute_kwargs)
+            else:
+                mapped_frame_bag.compute(**compute_kwargs)
         else:
-            mapped_frame_bag.compute(processes=False)
+            return mapped_frame_bag
 
     def save(
         self,

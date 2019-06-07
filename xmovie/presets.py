@@ -152,7 +152,7 @@ def _smooth_boundary_globe(projection):
     return projection
 
 
-def _base_plot(ax, base_data, timestamp, plotmethod=None, **kwargs):
+def _base_plot(ax, base_data, frame, plotmethod=None, **kwargs):
     # core plot call with updated defaults
 
     # set sensible defaults for each plotmethod
@@ -162,15 +162,30 @@ def _base_plot(ax, base_data, timestamp, plotmethod=None, **kwargs):
     plt_kwargs.update(kwargs)
 
     # need to convert time to input variable
-    data = base_data.isel(time=timestamp)
+    data = base_data.isel(time=frame)
     p = _core_plot(ax, data, plotmethod=plotmethod, **plt_kwargs)
     return p
 
+def basic(
+    da,
+    fig,
+    frame,
+    framedim="time",
+    plotmethod=None,
+    plot_variable=None,
+    subplot_kw=None,
+    **kwargs
+):
+    # create axis
+    ax = fig.subplots(subplot_kw=subplot_kw)
+    data = check_input(da, plot_variable)
+    p = _base_plot(ax, data, frame, plotmethod=plotmethod, **kwargs)
+    return fig, ax, p
 
 def rotating_globe(
     da,
     fig,
-    timestamp,
+    frame,
     framedim="time",
     plotmethod=None,
     plot_variable=None,
@@ -189,11 +204,11 @@ def rotating_globe(
     # Same for lat
     lat = np.linspace(0, 360 * lat_rotations, len(da.time)) + lat_start
 
-    proj = ccrs.Orthographic(lon[timestamp], lat[timestamp])
-
+    proj = ccrs.Orthographic(lon[frame], lat[frame])
     proj = _smooth_boundary_globe(proj)
 
     subplot_kw = dict(projection=proj)
+
     # create axis
     ax = fig.subplots(subplot_kw=subplot_kw)
 
@@ -203,7 +218,7 @@ def rotating_globe(
 
     data = check_input(da, plot_variable)
 
-    _base_plot(ax, data, timestamp, plotmethod=plotmethod, **kwargs)
+    _base_plot(ax, data, frame, plotmethod=plotmethod, **kwargs)
     ax.set_title("")
     ax.set_global()
     # the order should be optional? (I can pass z_order for each...)
@@ -234,7 +249,7 @@ def rotating_globe(
 def rotating_globe_dark(
     da,
     fig,
-    timestamp,
+    frame,
     framedim="time",
     plotmethod=None,
     plot_variable=None,
@@ -257,9 +272,9 @@ def rotating_globe_dark(
     lat = np.linspace(0, 360 * lat_rotations, len(da.time)) + lat_start
 
     projection = _smooth_boundary_NearsidePerspective(
-        lon[timestamp], lat[timestamp]
+        lon[frame], lat[frame]
     )
-    # projection = ccrs.NearsidePerspective(lon[timestamp], lat[timestamp])
+    # projection = ccrs.NearsidePerspective(lon[frame], lat[frame])
 
     subplot_kw = dict(projection=projection)
     # create axis
@@ -289,7 +304,7 @@ def rotating_globe_dark(
 
     ax.background_patch.set_facecolor("k")
 
-    pp = _base_plot(ax, data, timestamp, plotmethod=plotmethod, **kwargs)
+    pp = _base_plot(ax, data, frame, plotmethod=plotmethod, **kwargs)
 
     _set_bgcolor(fig, ax, pp)
     ax.set_global()

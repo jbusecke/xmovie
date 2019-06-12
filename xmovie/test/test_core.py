@@ -1,6 +1,5 @@
 from xmovie.core import (
     _check_plotfunc_output,
-    create_frame,
     _combine_ffmpeg_command,
     _execute_command,
     _check_ffmpeg_execute,
@@ -31,15 +30,6 @@ def test_check_plotfunc_output():
     # TODO: I should loop over all presets with this test to ensure consistency
 
 
-@pytest.mark.parametrize("w", [400, 1024, 4000])
-@pytest.mark.parametrize("h", [400, 1024, 4000])
-@pytest.mark.parametrize("dpi", [43, 150, 300])
-def test_create_frame(w, h, dpi):
-    fig = create_frame(w, h, dpi)
-    assert fig.get_figwidth() * dpi == w
-    assert fig.get_figheight() * dpi == h
-
-
 @pytest.mark.parametrize("w", [400, 1024])
 @pytest.mark.parametrize("h", [400, 1024])
 @pytest.mark.parametrize("dpi", [43, 150])
@@ -48,7 +38,7 @@ def test_create_frame(w, h, dpi):
 def test_frame_save(tmpdir, frame, frame_pattern, dpi, w, h):
     # Create Figure
     # fig = plt.figure()
-    fig = create_frame(w, h, dpi)
+    fig = plt.figure(figsize=[w / dpi, h / dpi])
     frame_save(fig, frame, odir=tmpdir, frame_pattern=frame_pattern, dpi=dpi)
     filename = tmpdir.join(frame_pattern % frame)
     img = Image.open(filename.strpath)

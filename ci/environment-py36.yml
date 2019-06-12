@@ -1,4 +1,4 @@
-name: test_env
+name: test_env_xmovie
 channels:
   - conda-forge
 dependencies:

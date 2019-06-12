@@ -29,7 +29,7 @@ except:
 
 # is it a good idea to set these here?
 # Needs to be dependent on dpi and videosize
-plt.rcParams.update({"font.size": 16})
+plt.rcParams.update({"font.size": 14})
 
 
 def _check_plotfunc_output(func, da):
@@ -42,7 +42,6 @@ def _check_plotfunc_output(func, da):
         return 0
     else:
         return len(oargs)
-
 
 
 def _check_ffmpeg_version():
@@ -189,11 +188,12 @@ def write_movie(
 
     return p
 
-def create_frame(pixelwidth, pixelheight, dpi):
-    """Creates a Figure sized according to the pixeldimensions"""
-    fig = plt.figure()
-    fig.set_size_inches(pixelwidth / dpi, pixelheight / dpi)
-    return fig
+
+# def create_frame(pixelwidth, pixelheight, dpi):
+#     """Creates a Figure sized according to the pixeldimensions"""
+#     fig = plt.figure()
+#     fig.set_size_inches(pixelwidth / dpi, pixelheight / dpi)
+#     return fig
 
 
 def frame_save(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100):
@@ -226,6 +226,8 @@ class Movie:
         self.pixelwidth = pixelwidth
         self.pixelheight = pixelheight
         self.dpi = dpi
+        self.width = self.pixelwidth / self.dpi
+        self.height = self.pixelheight / self.dpi
         self.frame_pattern = frame_pattern
         self.data = da
         self.framedim = framedim
@@ -256,7 +258,8 @@ class Movie:
             Description of returned object.
 
         """
-        fig = create_frame(self.pixelwidth, self.pixelheight, self.dpi)
+        fig = plt.figure(figsize=[self.width, self.height])
+        # create_frame(self.pixelwidth, self.pixelheight, self.dpi)
         # produce dummy output for ax and pp if the plotfunc does not provide them
         if self.plotfunc_n_outargs == 2:
             # this should be the case for all presets provided by xmovie
@@ -270,7 +273,7 @@ class Movie:
             ax, pp = None, None
         return fig, ax, pp
 
-    def preview(self, timestep):
+    def preview(self, timestep, debug=False):
         """Creates preview frame of movie Class.
 
         Parameters
@@ -288,10 +291,12 @@ class Movie:
             handle to the plotobject(s)
 
         """
-        with plt.rc_context({"figure.dpi": self.dpi}):
+        with plt.rc_context(
+            {"figure.dpi": self.dpi, "figure.figsize": [self.width, self.height]}
+        ):
             fig, ax, pp = self.render_frame(timestep)
-            # plt.show()
-        # return fig, ax, pp
+        if debug:
+            return fig, ax, pp
 
     def save_frames(self, odir, progress=False):
         """Save movie frames as picture files.

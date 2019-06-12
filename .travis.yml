@@ -20,7 +20,7 @@ before_install:
 
 install:
   - conda env create --file ci/environment-$CONDA_ENV.yml
-  - source activate test_env
+  - source activate test_env_xmovie
   - conda list
   - pip install --no-deps -e .
 

@@ -13,7 +13,7 @@ from subprocess import Popen, PIPE, STDOUT
 import matplotlib.pyplot as plt
 
 try:
-    from tqdm import tqdm
+    from tqdm.auto import tqdm
 
     tqdm_avail = True
 except:
@@ -290,8 +290,8 @@ class Movie:
         """
         with plt.rc_context({"figure.dpi": self.dpi}):
             fig, ax, pp = self.render_frame(timestep)
-            plt.show()
-        return fig, ax, pp
+            # plt.show()
+        # return fig, ax, pp
 
     def save_frames(self, odir, progress=False):
         """Save movie frames as picture files.

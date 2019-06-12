@@ -51,7 +51,7 @@ Saving a `.gif` is as easy as changing the filename:
 mov.save('movie.gif')
 ```
 That is it! Now pat yourself on the shoulder and enjoy your masterpiece.
-![](docs/gifs/movie.gif)
+![](docs/gifs/movie_gif.gif)
 
 > The gif is created by first rendering a movie and then converting it to a gif.
 If you want to keep both outputs you can simply do `mov.save('movie.gif', remove_movie=False)`

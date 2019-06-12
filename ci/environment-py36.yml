@@ -1,4 +1,4 @@
-name: test_env
+name: test_env_xmovie
 channels:
   - conda-forge
 dependencies:
@@ -10,6 +10,7 @@ dependencies:
   - future
   - matplotlib
   - cartopy
+  #>0.17.0
   - ffmpeg
   - pip:
     - codecov

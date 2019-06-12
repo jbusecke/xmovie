@@ -1,15 +1,16 @@
 import warnings
 import numpy as np
 import xarray as xr
+from cartopy.mpl import geoaxes
 import cartopy.crs as ccrs
-
-# from cartopy._crs import WGS84_SEMIMAJOR_AXIS # this import doesnt work?
 import cartopy.feature as cfeature
+
 import shapely.geometry as sgeom
 import matplotlib.pyplot as plt
 
 
-def get_plot_defaults(da):
+# Data treatment
+def _get_plot_defaults(da):
     if isinstance(da, xr.DataArray):
         data = da
     else:
@@ -18,7 +19,6 @@ def get_plot_defaults(da):
     defaults["vmin"] = data.min().data
     defaults["vmax"] = data.max().data
     defaults["cbar_kwargs"] = dict(extend="neither")
-    # maybe change to
     return defaults
 
 
@@ -28,8 +28,7 @@ def check_input(da, fieldname):
         if fieldname is None:
             fieldname = list(da.data_vars)[0]
             warnings.warn(
-                "No plot_variable supplied. Defaults to `%s`" % fieldname,
-                UserWarning,
+                "No plot_variable supplied. Defaults to `%s`" % fieldname, UserWarning
             )
         data = da[fieldname]
     elif isinstance(da, xr.DataArray):
@@ -43,10 +42,11 @@ def check_input(da, fieldname):
     return data
 
 
+# plotting basics
 def _core_plot(ax, data, plotmethod=None, **kwargs):
     """Core plotting functionality"""
 
-    #     check kwargs input
+    # Deactivate cbar for contours (not sure this should be hardcoded...)
     if plotmethod == "contour":
         kwargs.pop("cbar_kwargs", None)
 
@@ -56,8 +56,13 @@ def _core_plot(ax, data, plotmethod=None, **kwargs):
     if plotmethod is None:
         p = data.plot(ax=ax, **kwargs)
     # doesnt work,...i want this for smoother images
-    # elif plotmethod == "imshow":
-    #     p = data.plot.imshow(ax=ax, **kwargs)
+    elif plotmethod == "imshow":
+        # p = data.plot.imshow(ax=ax, **kwargs)
+        # testing interpolation
+        p = data.plot.imshow(ax=ax, interpolation="gaussian", **kwargs)
+        # print(p.get_interpolation())
+    elif plotmethod == "pcolormesh":
+        p = data.plot.pcolormesh(ax=ax, **kwargs)
     elif plotmethod == "contour":
         p = data.plot.contour(ax=ax, **kwargs)
     elif plotmethod == "contourf":
@@ -71,26 +76,25 @@ def _core_plot(ax, data, plotmethod=None, **kwargs):
     return p
 
 
-def _smooth_boundary_NearsidePerspective(
-    central_longitude=0.0,
-    central_latitude=0.0,
-    satellite_height=35785831,
-    false_easting=0,
-    false_northing=0,
-    globe=None,
-):
-    proj = ccrs.NearsidePerspective(
-        central_longitude=central_longitude,
-        central_latitude=central_latitude,
-        satellite_height=satellite_height,
-        false_easting=false_easting,
-        false_northing=false_northing,
-        globe=globe,
-    )
+def _base_plot(ax, base_data, timestamp, plotmethod=None, **kwargs):
+    # core plot call with updated defaults
 
+    # set sensible defaults for each plotmethod
+    plt_kwargs = _get_plot_defaults(base_data)
+
+    # update with supplied kwargs and map_style_kwargs
+    plt_kwargs.update(kwargs)
+
+    # need to convert time to input variable
+    data = base_data.isel(time=timestamp)
+    p = _core_plot(ax, data, plotmethod=plotmethod, **plt_kwargs)
+    return p
+
+
+# projections utilities and hacks
+def _smooth_boundary_NearsidePerspective(projection):
     # workaround for a smoother outer boundary
     # (https://github.com/SciTools/cartopy/issues/613)
-
     # Re-implement the cartopy code to figure out the boundary.
 
     # This is just really a guess....
@@ -98,33 +102,100 @@ def _smooth_boundary_NearsidePerspective(
     # because I cannot import it above...this should be fixed upstream
     # anyways...
 
-    a = proj.globe.semimajor_axis or WGS84_SEMIMAJOR_AXIS
-    h = np.float(satellite_height)
+    a = projection.globe.semimajor_axis or WGS84_SEMIMAJOR_AXIS
+    h = projection.proj4_params["h"]
+    false_easting = projection.proj4_params["x_0"]
+    false_northing = projection.proj4_params["y_0"]
     max_x = a * np.sqrt(h / (2 * a + h))
-    coords = ccrs._ellipse_boundary(
-        max_x, max_x, false_easting, false_northing, n=361
-    )
-    proj._boundary = sgeom.LinearRing(coords.T)
-    return proj
+    coords = ccrs._ellipse_boundary(max_x, max_x, false_easting, false_northing, n=361)
+    projection._boundary = sgeom.LinearRing(coords.T)
+    return projection
 
 
-def _set_bgcolor(fig, ax, pp, fgcolor="0.7", bgcolor="0.1"):
-    "Sets the colorscheme for figure, axis and plot object (`pp`)"
+# def _smooth_boundary_globe(projection):
+#     # workaround for a smoother outer boundary
+#     # (https://github.com/SciTools/cartopy/issues/613)
+#
+#     # Re-implement the cartopy code to figure out the boundary.
+#     a = np.float(projection.globe.semimajor_axis or 6378137.0)
+#     b = np.float(projection.globe.semiminor_axis or a)
+#     coords = ccrs._ellipse_boundary(a * 0.99999, b * 0.99999, n=361)
+#
+#     # Update the projection's boundary.
+#     projection._boundary = sgeom.polygon.LinearRing(coords.T)
+#     return projection
+
+
+# Styling of the plot elements
+def _style_dict_raw():
+    return {
+        "standard": {
+            "bgcolor": "1.0",
+            "fgcolor": "0.7",
+            "blend_outline_patch": False,
+            "landcolor": "0.2",
+            "coastcolor": "0.3",
+        },
+        "dark": {
+            "bgcolor": "0.1",
+            "fgcolor": "0.7",
+            "blend_outline_patch": True,
+            "landcolor": "0.2",
+            "coastcolor": "0.3",
+        },
+    }
+
+
+def _style_dict(style=None):
+    # set default style
+    if style is None:
+        style = "standard"
+    # define parameters for styles
+    style_dict = _style_dict_raw()
+    return style_dict[style]
+
+
+def _set_style(fig, ax, pp, style):
+    "Sets the colorscheme for figure, axis and plot object (`pp`) according to style"
+    # check if ax is 'normal' or cartopy projection
+    is_geoax = False
+    if isinstance(ax, geoaxes.GeoAxesSubplot):
+        is_geoax = True
+
+    # parse styles
+    style_dict = _style_dict(style)
+    supported_styles = list(_style_dict_raw().keys())
+    if (style not in supported_styles) and (style is not None):
+        raise ValueError(
+            "Given value for `style`(%s) not supported. \
+        Currently support [%s]"
+            % (style, supported_styles)
+        )
+    # can I declare these in an automated fashinon?
+    bgcolor = style_dict.pop("bgcolor", None)
+    fgcolor = style_dict.pop("fgcolor", None)
+    blend_outline_patch = style_dict.pop("blend_outline_patch", None)
+
     fig.patch.set_facecolor(bgcolor)
-    ax.set_facecolor(bgcolor)
+    if is_geoax:
+        ax.background_patch.set_facecolor(bgcolor)
+    else:
+        ax.set_facecolor(bgcolor)
 
     # Use the boundary to blend the edges of the globe into background
-    ax.outline_patch.set_edgecolor(bgcolor)
-    ax.outline_patch.set_antialiased(True)
-    ax.outline_patch.set_linewidth(2)
+    if blend_outline_patch:
+        if is_geoax:
+            ax.outline_patch.set_edgecolor(bgcolor)
+            ax.outline_patch.set_antialiased(True)
+            ax.outline_patch.set_linewidth(2)
 
+    # modify colorbar
     try:
         cb = pp.colorbar
     except (AttributeError):
         cb = None
 
     if cb is not None:
-        # COLORBAR
         # set colorbar label plus label color
         cb.set_label(cb.ax.axes.get_ylabel(), color=fgcolor)
 
@@ -138,33 +209,39 @@ def _set_bgcolor(fig, ax, pp, fgcolor="0.7", bgcolor="0.1"):
         plt.setp(plt.getp(cb.ax.axes, "yticklabels"), color=fgcolor)
 
 
-def _smooth_boundary_globe(projection):
-    # workaround for a smoother outer boundary
-    # (https://github.com/SciTools/cartopy/issues/613)
-
-    # Re-implement the cartopy code to figure out the boundary.
-    a = np.float(projection.globe.semimajor_axis or 6378137.0)
-    b = np.float(projection.globe.semiminor_axis or a)
-    coords = ccrs._ellipse_boundary(a * 0.99999, b * 0.99999, n=361)
-
-    # Update the projection's boundary.
-    projection._boundary = sgeom.polygon.LinearRing(coords.T)
-    return projection
+def _add_land(ax, style):
+    if not isinstance(ax, geoaxes.GeoAxesSubplot):
+        raise ValueError("Cannot add land on non-cartopy axes. Got ($s)" % type(ax))
+    style_dict = _style_dict(style)
+    feature = cfeature.NaturalEarthFeature(
+        name="land", category="physical", scale="50m", facecolor=style_dict["landcolor"]
+    )
+    ax.add_feature(feature)
 
 
-def _base_plot(ax, base_data, timestamp, plotmethod=None, **kwargs):
-    # core plot call with updated defaults
+def _add_coast(ax, style):
+    if not isinstance(ax, geoaxes.GeoAxesSubplot):
+        raise ValueError("Cannot add land on non-cartopy axes. Got ($s)" % type(ax))
+    style_dict = _style_dict(style)
+    feature = cfeature.NaturalEarthFeature(
+        name="coastline",
+        category="physical",
+        scale="50m",
+        edgecolor=style_dict["coastcolor"],
+        facecolor="none",
+    )
+    ax.add_feature(feature)
 
-    # set sensible defaults for each plotmethod
-    plt_kwargs = get_plot_defaults(base_data)
 
-    # update with supplied kwargs and map_style_kwargs
-    plt_kwargs.update(kwargs)
-
-    # need to convert time to input variable
-    data = base_data.isel(time=timestamp)
-    p = _core_plot(ax, data, plotmethod=plotmethod, **plt_kwargs)
-    return p
+### Presets (should proabably put all others into a submodule)
+def basic(
+    da, fig, timestamp, plotmethod=None, plot_variable=None, subplot_kw=None, **kwargs
+):
+    # create axis
+    ax = fig.subplots(subplot_kw=subplot_kw)
+    data = check_input(da, plot_variable)
+    pp = _base_plot(ax, data, timestamp, plotmethod=plotmethod, **kwargs)
+    return ax, pp
 
 
 def rotating_globe(
@@ -175,53 +252,55 @@ def rotating_globe(
     plotmethod=None,
     plot_variable=None,
     overlay_variables=None,
-    lon_start=0,
-    lon_rotations=-1,
-    lat_start=35,
-    lat_rotations=0.05,
+    lon_start=-110,
+    lon_rotations=0.5,
+    lat_start=25,
+    lat_rotations=0,
     land=False,
     coastline=True,
+    style=None,
+    debug=False,
     **kwargs
 ):
 
     # rotate lon_rotations times throughout movie and start at lon_start
-    lon = np.linspace(0, 360 * lon_rotations, len(da.time)) + lon_start
+    lon = np.linspace(0, 360 * lon_rotations, len(da[framedim])) + lon_start
     # Same for lat
-    lat = np.linspace(0, 360 * lat_rotations, len(da.time)) + lat_start
+    lat = np.linspace(0, 360 * lat_rotations, len(da[framedim])) + lat_start
 
-    proj = ccrs.Orthographic(lon[timestamp], lat[timestamp])
-
-    proj = _smooth_boundary_globe(proj)
+    # proj = ccrs.Orthographic(lon[timestamp], lat[timestamp])
+    # proj = _smooth_boundary_globe(proj)
+    # This looks more like a 3D globe in my opinion
+    proj = ccrs.NearsidePerspective(
+        central_longitude=lon[timestamp], central_latitude=lat[timestamp]
+    )
+    proj = _smooth_boundary_NearsidePerspective(proj)
 
     subplot_kw = dict(projection=proj)
-    # create axis
-    ax = fig.subplots(subplot_kw=subplot_kw)
 
     # mapping style kwargs
     map_style_kwargs = dict(transform=ccrs.PlateCarree())
     kwargs.update(map_style_kwargs)
 
+    # create axis
+    ax = fig.subplots(subplot_kw=subplot_kw)
     data = check_input(da, plot_variable)
+    pp = _base_plot(ax, data, timestamp, plotmethod=plotmethod, **kwargs)
 
-    _base_plot(ax, data, timestamp, plotmethod=plotmethod, **kwargs)
+    _set_style(fig, ax, pp, style=style)
+
     ax.set_title("")
     ax.set_global()
+
+    # set style
+
     # the order should be optional? (I can pass z_order for each...)
     if land:
-        feature = cfeature.NaturalEarthFeature(
-            name="land", category="physical", scale="50m", facecolor="0.2"
-        )
-        ax.add_feature(feature)
+        _add_land(ax, style)
 
     if coastline:
-        feature = cfeature.NaturalEarthFeature(
-            name="coastline",
-            category="physical",
-            scale="50m",
-            edgecolor="0.3",
-            facecolor="none",
-        )
-        ax.add_feature(feature)
+        _add_coast(ax, style)
+
     gl = ax.gridlines()
     # Increase gridline res
     gl.n_steps = 500
@@ -229,71 +308,13 @@ def rotating_globe(
 
     # possibly for future versions, but I need a way to increase results
     # ax.outline_patch.set_visible(False)
+    return ax, pp
 
 
-def rotating_globe_dark(
-    da,
-    fig,
-    timestamp,
-    framedim="time",
-    plotmethod=None,
-    plot_variable=None,
-    overlay_variables=None,
-    lon_start=-10,
-    lon_rotations=-0.5,
-    lat_start=15,
-    lat_rotations=0.05,
-    land=False,
-    coastline=True,
-    **kwargs
-):
-
-    # split kwargs out
-    # title = kwargs.pop("title", "")
-
-    # rotate lon_rotations times throughout movie and start at lon_start
-    lon = np.linspace(0, 360 * lon_rotations, len(da.time)) + lon_start
-    # Same for lat
-    lat = np.linspace(0, 360 * lat_rotations, len(da.time)) + lat_start
-
-    projection = _smooth_boundary_NearsidePerspective(
-        lon[timestamp], lat[timestamp]
+def rotating_globe_dark(da, fig, timestamp, **kwargs):
+    warnings.warn(
+        "This preset will be deprecated in the future. \
+    Use `rotating_globe` with `style=`dark`` instead`",
+        DeprecationWarning,
     )
-    # projection = ccrs.NearsidePerspective(lon[timestamp], lat[timestamp])
-
-    subplot_kw = dict(projection=projection)
-    # create axis
-    ax = fig.subplots(subplot_kw=subplot_kw)
-
-    # mapping style kwargs
-    map_style_kwargs = dict(transform=ccrs.PlateCarree())
-    kwargs.update(map_style_kwargs)
-    data = check_input(da, plot_variable)
-
-    # the order should be optional? (I can pass z_order for each...)
-    if land:
-        feature = cfeature.NaturalEarthFeature(
-            name="land", category="physical", scale="50m", facecolor="0.2"
-        )
-        ax.add_feature(feature)
-
-    if coastline:
-        feature = cfeature.NaturalEarthFeature(
-            name="coastline",
-            category="physical",
-            scale="50m",
-            edgecolor="0.3",
-            facecolor="none",
-        )
-        ax.add_feature(feature)
-
-    ax.background_patch.set_facecolor("k")
-
-    pp = _base_plot(ax, data, timestamp, plotmethod=plotmethod, **kwargs)
-
-    _set_bgcolor(fig, ax, pp)
-    ax.set_global()
-    # TODO: I need to figure out how to allow a title...
-    # but that will flicker like crazy
-    # ax.set_title(title)
-    ax.set_title("")
+    return rotating_globe(da, fig, timestamp, style="dark", **kwargs)

@@ -1,5 +1,5 @@
 # xmovie
-A simple way of creating movies from [xarray](https://github.com/pydata/xarray) objects.
+A simple way of creating beautiful movies from [xarray](https://github.com/pydata/xarray) objects.
 
 With ever increasing detail, modern scientific observations and model results
 lend themselves to visualization in the form of movies.
@@ -9,14 +9,18 @@ afternoon of a weeklong conference, but it can also speed up the discovery
 process, since our eyes are amazing image processing devices.
 
 This module aims to facilitate movie rendering from data object based on
-[xarray](https://github.com/pydata/xarray) objects. It is already possible to
-get very quick and beautiful static images from xarray, but movies can still
-present a hassle.
+[xarray](https://github.com/pydata/xarray) objects.
+
+Xarray already provides a way to create quick and beautiful static images from your data.
+[animatplot](https://github.com/t-makaro/animatplot) works towards animating these 'standard' xarray plots.
+
+But it can become tedious to customize plots, particularly when map projections are used.
 
 The main aims of this module are:
 
 - Enable quick but high quality movie frame creation from existing xarray
 objects with preset plot functions - create a movie with only 2 lines of code.
+- Provide high quality, customizable presets to create stunning visualizations with minimal setup.
 - Convert your static plot workflow to a movie with only a few lines of code, while maintaining all the flexibility of [xarray](https://github.com/pydata/xarray) and [matplotlib](https://matplotlib.org/).
 
 
@@ -47,7 +51,7 @@ Saving a `.gif` is as easy as changing the filename:
 mov.save('movie.gif')
 ```
 That is it! Now pat yourself on the shoulder and enjoy your masterpiece.
-!['spin spin spin'](docs/gifs/movie.gif)
+![](docs/gifs/movie.gif)
 
 > The gif is created by first rendering a movie and then converting it to a gif.
 If you want to keep both outputs you can simply do `mov.save('movie.gif', remove_movie=False)`
@@ -60,25 +64,36 @@ Preview single frames in the movie with the `Movie.preview` function:
 ```
 # preview 10th frame
 mov.preview(10)
-# preview 100th frame. Note the rotation
-mov.preview(100)
 ```
-!['10th frame'](docs/pics/preview1.png)!['100th frame'](docs/pics/preview2.png)
+![a](docs/pics/preview.png)
+
+## Plot presets
+xmovie provides several presets to enable quick creation of animated vizualizations
+```python
+from xmovie.presets import rotating_globe
+# specify custom plotfunctions (here a preset from xmovie)
+mov = Movie(ds.air, plotfunc=rotating_globe)
+mov.save('movie_rotating.gif', progress=True)
+```
+![](docs/gifs/movie_rotating.gif)
+
+
 
 ## Modify plots
-The preset plot-functions each have a unique set of keyword arguments for custom looks, but they all support the `xarray` plotting modes via the `plotmethod` keyword:
-```
+The preset plot-functions each have a unique set of keyword arguments for custom looks, but they all support the `xarray` plotting modes via the `plotmethod` keyword.
+For a more detailed demonstration see [this](First_Steps.ipynb) notebook.
+<!-- ```
 from xmovie.presets import rotating_globe_dark  # the default preset
 mov = Movie(ds.air, rotating_globe_dark, plotmethod='contourf', coastline=False, land=True)
 mov.save('movie_contf.gif')
 ```
-!['spin spin spin'](docs/gifs/movie_contf.gif)
+![](docs/gifs/movie_contf.gif)
 
 ```
 mov = Movie(ds, rotating_globe_dark, plotmethod='contour', coastline=False, land=True)
 mov.save('movie_cont.gif')
 ```
-!['spin spin spin'](docs/gifs/movie_cont.gif)
+![](docs/gifs/movie_cont.gif)
 
 ```
 ds = xr.tutorial.open_dataset('rasm').Tair
@@ -96,7 +111,7 @@ mov = Movie(ds, rotating_globe_dark,
 mov.save('movie_rasm.gif')
 ```
 
-!['rasm_spinning'](docs/gifs/movie_rasm.gif)
+!['rasm_spinning'](docs/gifs/movie_rasm.gif) -->
 
 
 ### Custom Plots
@@ -109,6 +124,8 @@ Take this example:
 import matplotlib.pyplot as plt
 
 ds = xr.tutorial.open_dataset('rasm').Tair
+
+
 fig = plt.figure(figsize=[10,5])
 tt = 30
 
@@ -132,7 +149,7 @@ ax2.set_title('Data at station');
 fig.subplots_adjust(wspace=0.6)
 ```
 
-!['static_example'](docs/pics/static.png)
+![a](docs/pics/static.png)
 
 All that is needed to wrap this into a function with the signature `func(ds, fig, timestamp, **kwargs)`, where `ds` is an xarray Dataset or DataArray, `fig` is a `matplotlib.figure` object and `timestamp` is an integer which indicates the movie frame.
 
@@ -162,8 +179,7 @@ def custom_plotfunc(ds, fig, tt):
 
     fig.subplots_adjust(wspace=0.4)
 
-dss = xr.tutorial.open_dataset('rasm').Tair
-mov_custom = Movie(dss, custom_plotfunc)
+mov_custom = Movie(ds, custom_plotfunc)
 mov_custom.save('movie_custom.gif')
 ```
-!['sweet_custom_plots'](docs/gifs/movie_custom.gif)
+![](docs/gifs/movie_custom.gif)

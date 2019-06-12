@@ -8,12 +8,12 @@ import glob
 import warnings
 import gc
 
-from .presets import rotating_globe_dark
+from .presets import basic
 from subprocess import Popen, PIPE, STDOUT
 import matplotlib.pyplot as plt
 
 try:
-    from tqdm import tqdm
+    from tqdm.auto import tqdm
 
     tqdm_avail = True
 except:
@@ -29,29 +29,19 @@ except:
 
 # is it a good idea to set these here?
 # Needs to be dependent on dpi and videosize
-plt.rcParams.update({"font.size": 16})
+plt.rcParams.update({"font.size": 14})
 
 
-def create_frame(pixelwidth, pixelheight, dpi):
-    """Creates a Figure sized according to the pixeldimensions"""
+def _check_plotfunc_output(func, da):
+    timestep = 0
     fig = plt.figure()
-    fig.set_size_inches(pixelwidth / dpi, pixelheight / dpi)
-    return fig
-
-
-def frame_save(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100):
-    fig.savefig(
-        os.path.join(odir, frame_pattern % (frame)),
-        dpi=dpi,
-        facecolor=fig.get_facecolor(),
-        transparent=True,
-    )
-    # I am trying everything to *wipe* this figure, hoping that it could
-    # help with the dask glitches I experienced earlier.
-    # TBD if this is all needed...how this might affect performance.
+    oargs = func(da, fig, timestep)
+    # I just want the number of output args, delete plot
     plt.close(fig)
-    del fig
-    gc.collect(2)
+    if oargs is None:
+        return 0
+    else:
+        return len(oargs)
 
 
 def _check_ffmpeg_version():
@@ -77,9 +67,7 @@ def _check_ffmpeg_version():
     return found
 
 
-def _combine_ffmpeg_command(
-    sourcefolder, moviename, frame_pattern="frame_%05d.png"
-):
+def _combine_ffmpeg_command(sourcefolder, moviename, frame_pattern="frame_%05d.png"):
     options = " -y -c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p -framerate 20"
     # we need `-y` because i can not properly diagnose the errors here...
     command = 'ffmpeg -i "%s" %s "%s"' % (
@@ -143,7 +131,9 @@ def convert_gif(
 ):
 
     if gif_palette:
-        palette_filter = '-filter_complex "[0:v] split [a][b];[a] palettegen [p];[b][p] paletteuse"'
+        palette_filter = (
+            '-filter_complex "[0:v] split [a][b];[a] palettegen [p];[b][p] paletteuse"'
+        )
     else:
         palette_filter = ""
 
@@ -199,6 +189,28 @@ def write_movie(
     return p
 
 
+# def create_frame(pixelwidth, pixelheight, dpi):
+#     """Creates a Figure sized according to the pixeldimensions"""
+#     fig = plt.figure()
+#     fig.set_size_inches(pixelwidth / dpi, pixelheight / dpi)
+#     return fig
+
+
+def frame_save(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100):
+    fig.savefig(
+        os.path.join(odir, frame_pattern % (frame)),
+        dpi=dpi,
+        facecolor=fig.get_facecolor(),
+        transparent=True,
+    )
+    # I am trying everything to *wipe* this figure, hoping that it could
+    # help with the dask glitches I experienced earlier.
+    # TBD if this is all needed...how this might affect performance.
+    plt.close(fig)
+    del fig
+    gc.collect(2)
+
+
 class Movie:
     def __init__(
         self,
@@ -214,11 +226,13 @@ class Movie:
         self.pixelwidth = pixelwidth
         self.pixelheight = pixelheight
         self.dpi = dpi
+        self.width = self.pixelwidth / self.dpi
+        self.height = self.pixelheight / self.dpi
         self.frame_pattern = frame_pattern
         self.data = da
         self.framedim = framedim
         if plotfunc is None:
-            self.plotfunc = rotating_globe_dark
+            self.plotfunc = basic
         else:
             self.plotfunc = plotfunc
         self.kwargs = kwargs
@@ -226,9 +240,9 @@ class Movie:
         # add kwargs to plotfunc
         # Check input
         if self.framedim not in list(self.data.dims):
-            raise ValueError(
-                "Framedim (%s) not found in input data" % self.framedim
-            )
+            raise ValueError("Framedim (%s) not found in input data" % self.framedim)
+        # Check the output of plotfunc
+        self.plotfunc_n_outargs = _check_plotfunc_output(self.plotfunc, self.data)
 
     def render_frame(self, timestep):
         """renders complete figure (frame) for given timestep.
@@ -244,11 +258,22 @@ class Movie:
             Description of returned object.
 
         """
-        fig = create_frame(self.pixelwidth, self.pixelheight, self.dpi)
-        self.plotfunc(self.data, fig, timestep, **self.kwargs)
-        return fig
+        fig = plt.figure(figsize=[self.width, self.height])
+        # create_frame(self.pixelwidth, self.pixelheight, self.dpi)
+        # produce dummy output for ax and pp if the plotfunc does not provide them
+        if self.plotfunc_n_outargs == 2:
+            # this should be the case for all presets provided by xmovie
+            ax, pp = self.plotfunc(self.data, fig, timestep, **self.kwargs)
+        else:
+            warnings.warn(
+                "The provided `plotfunc` does not provide the expected number of output arguments.\
+            Expected a function `ax,pp =plotfunc(...)` but got %i output arguments. Inserting dummy values. This should not affect output. "
+            )
+            _ = self.plotfunc(self.data, fig, timestep, **self.kwargs)
+            ax, pp = None, None
+        return fig, ax, pp
 
-    def preview(self, timestep):
+    def preview(self, timestep, debug=False):
         """Creates preview frame of movie Class.
 
         Parameters
@@ -258,10 +283,20 @@ class Movie:
 
         Returns
         -------
-        matplotlib.figure
+        fig : matplotlib.Figure
+            The frame figure
+        ax : matplotlib.axes
+            The axes of the plot
+        pp: matplolib plot handle
+            handle to the plotobject(s)
 
         """
-        self.render_frame(timestep)
+        with plt.rc_context(
+            {"figure.dpi": self.dpi, "figure.figsize": [self.width, self.height]}
+        ):
+            fig, ax, pp = self.render_frame(timestep)
+        if debug:
+            return fig, ax, pp
 
     def save_frames(self, odir, progress=False):
         """Save movie frames as picture files.
@@ -282,13 +317,9 @@ class Movie:
             warnings.warn("Cant show progess bar at this point. Install tqdm")
 
         for fi in frame_range:
-            fig = self.render_frame(fi)
+            fig, ax, pp = self.render_frame(fi)
             frame_save(
-                fig,
-                fi,
-                odir=odir,
-                frame_pattern=self.frame_pattern,
-                dpi=self.dpi,
+                fig, fi, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
             )
 
     def save(

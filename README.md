@@ -1,5 +1,5 @@
 # xmovie
-A simple way of creating movies from [xarray](https://github.com/pydata/xarray) objects.
+A simple way of creating beautiful movies from [xarray](https://github.com/pydata/xarray) objects.
 
 With ever increasing detail, modern scientific observations and model results
 lend themselves to visualization in the form of movies.
@@ -9,14 +9,18 @@ afternoon of a weeklong conference, but it can also speed up the discovery
 process, since our eyes are amazing image processing devices.
 
 This module aims to facilitate movie rendering from data object based on
-[xarray](https://github.com/pydata/xarray) objects. It is already possible to
-get very quick and beautiful static images from xarray, but movies can still
-present a hassle.
+[xarray](https://github.com/pydata/xarray) objects.
+
+Xarray already provides a way to create quick and beautiful static images from your data.
+[animatplot](https://github.com/t-makaro/animatplot) works towards animating these 'standard' xarray plots.
+
+But it can become tedious to customize plots, particularly when map projections are used.
 
 The main aims of this module are:
 
 - Enable quick but high quality movie frame creation from existing xarray
 objects with preset plot functions - create a movie with only 2 lines of code.
+- Provide high quality, customizable presets to create stunning visualizations with minimal setup.
 - Convert your static plot workflow to a movie with only a few lines of code, while maintaining all the flexibility of [xarray](https://github.com/pydata/xarray) and [matplotlib](https://matplotlib.org/).
 
 

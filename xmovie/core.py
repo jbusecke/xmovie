@@ -44,27 +44,6 @@ def _check_plotfunc_output(func, da):
         return len(oargs)
 
 
-def create_frame(pixelwidth, pixelheight, dpi):
-    """Creates a Figure sized according to the pixeldimensions"""
-    fig = plt.figure()
-    fig.set_size_inches(pixelwidth / dpi, pixelheight / dpi)
-    return fig
-
-
-def frame_save(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100):
-    fig.savefig(
-        os.path.join(odir, frame_pattern % (frame)),
-        dpi=dpi,
-        facecolor=fig.get_facecolor(),
-        transparent=True,
-    )
-    # I am trying everything to *wipe* this figure, hoping that it could
-    # help with the dask glitches I experienced earlier.
-    # TBD if this is all needed...how this might affect performance.
-    plt.close(fig)
-    del fig
-    gc.collect(2)
-
 
 def _check_ffmpeg_version():
     p = Popen("ffmpeg -version", stdout=PIPE, shell=True)
@@ -209,6 +188,27 @@ def write_movie(
             pass
 
     return p
+
+def create_frame(pixelwidth, pixelheight, dpi):
+    """Creates a Figure sized according to the pixeldimensions"""
+    fig = plt.figure()
+    fig.set_size_inches(pixelwidth / dpi, pixelheight / dpi)
+    return fig
+
+
+def frame_save(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100):
+    fig.savefig(
+        os.path.join(odir, frame_pattern % (frame)),
+        dpi=dpi,
+        facecolor=fig.get_facecolor(),
+        transparent=True,
+    )
+    # I am trying everything to *wipe* this figure, hoping that it could
+    # help with the dask glitches I experienced earlier.
+    # TBD if this is all needed...how this might affect performance.
+    plt.close(fig)
+    del fig
+    gc.collect(2)
 
 
 class Movie:

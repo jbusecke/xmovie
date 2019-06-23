@@ -67,17 +67,6 @@ def _check_ffmpeg_version():
     return found
 
 
-def _combine_ffmpeg_command(sourcefolder, moviename, frame_pattern="frame_%05d.png"):
-    options = " -y -c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p -framerate 20"
-    # we need `-y` because i can not properly diagnose the errors here...
-    command = 'ffmpeg -i "%s" %s "%s"' % (
-        os.path.join(sourcefolder, frame_pattern),
-        options,
-        os.path.join(sourcefolder, moviename),
-    )
-    return command
-
-
 def _execute_command(command, verbose=False, error=True):
     p = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
 
@@ -128,6 +117,7 @@ def convert_gif(
     resolution=[480, 320],
     verbose=False,
     remove_movie=True,
+    gif_framerate=5,
 ):
 
     if gif_palette:
@@ -137,9 +127,10 @@ def convert_gif(
     else:
         palette_filter = ""
 
-    command = "ffmpeg -y -i %s %s -r 5 -s %ix%i %s" % (
+    command = "ffmpeg -y -i %s %s -r %i -s %ix%i %s" % (
         mpath,
         palette_filter,
+        gif_framerate,
         resolution[0],
         resolution[1],
         gpath,
@@ -156,6 +147,19 @@ def convert_gif(
     return p
 
 
+def _combine_ffmpeg_command(
+    sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options
+):
+    # we need `-y` because i can not properly diagnose the errors here...
+    command = 'ffmpeg -i "%s" -y %s -r %i "%s"' % (
+        os.path.join(sourcefolder, frame_pattern),
+        ffmpeg_options,
+        framerate,
+        os.path.join(sourcefolder, moviename),
+    )
+    return command
+
+
 def write_movie(
     sourcefolder,
     moviename,
@@ -163,6 +167,8 @@ def write_movie(
     remove_frames=True,
     verbose=False,
     overwrite_existing=False,
+    ffmpeg_options="-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p",
+    framerate=20,
 ):
     path = os.path.join(sourcefolder, moviename)
     if os.path.exists(path):
@@ -171,8 +177,9 @@ def write_movie(
                 "File `%s` already exists. Set `overwrite_existing` to True to overwrite."
                 % (path)
             )
+
     command = _combine_ffmpeg_command(
-        sourcefolder, moviename, frame_pattern=frame_pattern
+        sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options
     )
     p = _check_ffmpeg_execute(command, verbose=verbose)
 
@@ -330,8 +337,11 @@ class Movie:
         progress=False,
         verbose=False,
         overwrite_existing=False,
+        framerate=15,
+        ffmpeg_options="-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p",
         gif_palette=False,
         gif_resolution_factor=0.5,
+        gif_framerate=10,
     ):
         """Save out animation from Movie object.
 
@@ -356,6 +366,12 @@ class Movie:
         overwrite_existing : Bool
             Set to overwrite existing files with `filename`
             (the default is False).
+        framerate : int
+            Frames per second for the output movie file. Only relevant for '.mp4' files.
+            (the default is 15)
+        ffmpeg_options: str
+            Encoding options to pass to ffmpeg call.
+            Defaults to : `"-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p"`
         gif_palette : Bool
             Use a gif colorpalette to improve quality. Can lead to artifacts
             in very contrasty situations (the default is False).
@@ -363,6 +379,9 @@ class Movie:
             Factor used to reduce gif resolution compared to movie.
             Use 1.0 to put out the same resolutions for both products.
             (the default is 0.5).
+        gif_framerate : int
+            As `framerate` but for the gif output file. Only relevant to `.gif` files.
+            (the default is 10)
         """
 
         # parse out directory and filename
@@ -392,6 +411,8 @@ class Movie:
             remove_frames=remove_frames,
             verbose=verbose,
             overwrite_existing=overwrite_existing,
+            framerate=framerate,
+            ffmpeg_options=ffmpeg_options,
         )
 
         # Create gif
@@ -405,6 +426,7 @@ class Movie:
                 gif_palette=gif_palette,
                 verbose=verbose,
                 remove_movie=remove_movie,
+                gif_framerate=gif_framerate,
             )
 
     # def save_parallel(

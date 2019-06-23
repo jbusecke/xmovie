@@ -12,6 +12,7 @@ dependencies:
   - cartopy
   #>0.17.0
   - ffmpeg
+  - opencv
   - pip:
     - codecov
     - pytest-cov

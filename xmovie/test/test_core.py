@@ -15,6 +15,7 @@ from PIL import Image
 import numpy as np
 import xarray as xr
 import os
+import cv2
 
 
 def dummy_plotfunc(da, fig, timestep):
@@ -60,14 +61,22 @@ def test_check_ffmpeg_version():
     "dir, fname, path", [("", "file", "file"), ("foo", "file", "foo/file")]
 )
 @pytest.mark.parametrize("frame_pattern", ["frame_%05d.png", "test%05d.png"])
-def test_combine_ffmpeg_command(dir, fname, path, frame_pattern):
-    fixed_options = (
-        " -y -c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p -framerate 20"
-    )
-    cmd = _combine_ffmpeg_command(dir, fname, frame_pattern=frame_pattern)
-    assert cmd == 'ffmpeg -i "%s" %s "%s"' % (
+@pytest.mark.parametrize("framerate", [5, 25])
+@pytest.mark.parametrize(
+    "ffmpeg_options",
+    [
+        "-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p",
+        "-c:v libx264 -preset slow -crf 15 -pix_fmt yuv420p",
+    ],
+)
+def test_combine_ffmpeg_command(
+    dir, fname, path, frame_pattern, framerate, ffmpeg_options
+):
+    cmd = _combine_ffmpeg_command(dir, fname, framerate, frame_pattern, ffmpeg_options)
+    assert cmd == 'ffmpeg -i "%s" -y %s -r %i "%s"' % (
         os.path.join(dir, frame_pattern),
-        fixed_options,
+        ffmpeg_options,
+        framerate,
         path,
     )
     # TODO: needs more testing for the decomp of the movie filename.
@@ -102,30 +111,48 @@ def test_dataarray():
 
 @pytest.mark.parametrize("moviename", ["movie.mp4", "shmoovie.mp4"])
 @pytest.mark.parametrize("remove_frames", [True, False])
-def test_movie_write_movie(tmpdir, moviename, remove_frames):
+@pytest.mark.parametrize("framerate", [5, 20])
+@pytest.mark.parametrize(
+    "ffmpeg_options",
+    [
+        "-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p",
+        "-c:v libx264 -preset fast -crf 15 -pix_fmt yuv420p",
+        # I am not sure how to assert the bitrate yet...
+    ],
+)
+def test_write_movie(tmpdir, moviename, remove_frames, framerate, ffmpeg_options):
 
     frame_pattern = "frame_%05d.png"  # the default
     m = tmpdir.join(moviename)
-    mpath = m.strpath
-
     da = test_dataarray()
     mov = Movie(da)
     mov.save_frames(tmpdir)
     filenames = [tmpdir.join(frame_pattern % ff) for ff in range(len(da.time))]
-    write_movie(tmpdir, moviename, remove_frames=remove_frames)
+    write_movie(
+        tmpdir,
+        moviename,
+        remove_frames=remove_frames,
+        framerate=framerate,
+        ffmpeg_options=ffmpeg_options,
+    )
 
     if remove_frames:
         assert all([~fn.exists() for fn in filenames])
     else:
         assert all([fn.exists() for fn in filenames])
     assert m.exists()  # could test more stuff here I guess.
+    fps = cv2.VideoCapture(m.strpath).get(cv2.CAP_PROP_FPS)
+    assert fps == framerate
 
 
 @pytest.mark.parametrize("moviename", ["movie.mp4"])
 @pytest.mark.parametrize("gif_palette", [True, False])
 @pytest.mark.parametrize("gifname", ["movie.gif"])
 @pytest.mark.parametrize("remove_movie", [True, False])
-def test_convert_gif(tmpdir, moviename, remove_movie, gif_palette, gifname):
+@pytest.mark.parametrize("gif_framerate", [10, 15])
+def test_convert_gif(
+    tmpdir, moviename, remove_movie, gif_palette, gifname, gif_framerate
+):
     m = tmpdir.join(moviename)
     mpath = m.strpath
     g = tmpdir.join(gifname)
@@ -137,7 +164,13 @@ def test_convert_gif(tmpdir, moviename, remove_movie, gif_palette, gifname):
 
     write_movie(tmpdir, moviename)
 
-    convert_gif(mpath, gpath=gpath, gif_palette=gif_palette, remove_movie=remove_movie)
+    convert_gif(
+        mpath,
+        gpath=gpath,
+        gif_palette=gif_palette,
+        remove_movie=remove_movie,
+        gif_framerate=gif_framerate,
+    )
 
     if remove_movie:
         assert ~m.exists()
@@ -145,6 +178,8 @@ def test_convert_gif(tmpdir, moviename, remove_movie, gif_palette, gifname):
         assert m.exists()
 
     assert g.exists()
+    fps = 1000 / Image.open(g.strpath).info["duration"]
+    assert np.ceil(fps) == gif_framerate
 
     # TODO: Better error message when framedim is not available.
     # This takes forever with all these options...
@@ -179,11 +214,14 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
         else:
             assert mov.plotfunc == plotfunc
         assert mov.plotfunc_n_outargs == _check_plotfunc_output(mov.plotfunc, mov.data)
+
         assert mov.dpi == dpi
         assert mov.framedim == framedim
         assert mov.pixelwidth == pixelwidth
         assert mov.pixelheight == pixelheight
         assert mov.dpi == dpi
+        assert mov.kwargs == {}
+        # assures that none of the input options are not parsed
 
 
 @pytest.mark.parametrize("frame_pattern", ["frame_%05d.png", "test%05d.png"])
@@ -197,12 +235,37 @@ def test_movie_save_frames(tmpdir, frame_pattern):
 
 @pytest.mark.parametrize("filename", ["movie.mp4", "movie.gif"])
 @pytest.mark.parametrize("gif_palette", [True, False])
-def test_movie_save(tmpdir, filename, gif_palette):
+@pytest.mark.parametrize("framerate, gif_framerate", [(10, 8), (24, 15), (7, 4)])
+@pytest.mark.parametrize(
+    "ffmpeg_options",
+    [
+        "-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p",
+        "-c:v libx264 -preset slow -crf 15 -pix_fmt yuv420p",
+    ],
+)
+def test_movie_save(
+    tmpdir, filename, gif_palette, framerate, gif_framerate, ffmpeg_options
+):
+    print(gif_palette)
     # Need more tests for progress, verbose, overwriting
     path = tmpdir.join(filename)
     da = test_dataarray()
     mov = Movie(da)
-    mov.save(path.strpath, gif_palette=gif_palette)
+    mov.save(
+        path.strpath,
+        gif_palette=gif_palette,
+        framerate=framerate,
+        gif_framerate=gif_framerate,
+        ffmpeg_options=ffmpeg_options,
+    )
 
     assert path.exists()
     # I should also check if no other files were created. For later
+
+    # Check relevant fps of output file
+    if ".mp4" in filename:
+        fps = cv2.VideoCapture(path.strpath).get(cv2.CAP_PROP_FPS)
+        assert fps == framerate
+    elif ".gif" in filename:
+        fps = 1000 / Image.open(path.strpath).info["duration"]
+        assert np.ceil(fps) == gif_framerate

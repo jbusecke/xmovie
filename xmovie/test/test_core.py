@@ -269,3 +269,8 @@ def test_movie_save(
     elif ".gif" in filename:
         fps = 1000 / Image.open(path.strpath).info["duration"]
         assert np.ceil(fps) == gif_framerate
+
+    # Check overwriting
+    print(path.exists())
+    with pytest.raises(RuntimeError):
+        mov.save(path.strpath, overwrite_existing=False)

@@ -166,17 +166,9 @@ def write_movie(
     frame_pattern="frame_%05d.png",
     remove_frames=True,
     verbose=False,
-    overwrite_existing=False,
     ffmpeg_options="-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p",
     framerate=20,
 ):
-    path = os.path.join(sourcefolder, moviename)
-    if os.path.exists(path):
-        if not overwrite_existing:
-            raise RuntimeError(
-                "File `%s` already exists. Set `overwrite_existing` to True to overwrite."
-                % (path)
-            )
 
     command = _combine_ffmpeg_command(
         sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options
@@ -390,7 +382,7 @@ class Movie:
 
         # detect gif filename
 
-        isgif = "gif" in filename
+        isgif = ".gif" in filename
         if isgif:
             giffile = filename
             moviefile = filename.replace("gif", "mp4")
@@ -399,6 +391,21 @@ class Movie:
             moviefile = filename
 
         mpath = os.path.join(dirname, moviefile)
+
+        # check existing files
+        if os.path.exists(mpath):
+            if not overwrite_existing:
+                raise RuntimeError(
+                    "File `%s` already exists. Set `overwrite_existing` to True to overwrite."
+                    % (mpath)
+                )
+        if isgif:
+            if os.path.exists(gpath):
+                if not overwrite_existing:
+                    raise RuntimeError(
+                        "File `%s` already exists. Set `overwrite_existing` to True to overwrite."
+                        % (gpath)
+                    )
 
         # print frames
         self.save_frames(dirname, progress=progress)
@@ -410,7 +417,6 @@ class Movie:
             frame_pattern=self.frame_pattern,
             remove_frames=remove_frames,
             verbose=verbose,
-            overwrite_existing=overwrite_existing,
             framerate=framerate,
             ffmpeg_options=ffmpeg_options,
         )

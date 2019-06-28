@@ -10,6 +10,7 @@ from xmovie.core import (
 )
 from xmovie.presets import basic, rotating_globe
 import pytest
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
@@ -226,6 +227,38 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
         assert mov.dpi == dpi
         assert mov.kwargs == {}
         # assures that none of the input options are not parsed
+
+
+@pytest.mark.parametrize(
+    "plotfunc, expected_empty", [(dummy_plotfunc, True), (basic, False)]
+)
+def test_movie_render_frame(plotfunc, expected_empty):
+    da = test_dataarray()
+    mov = Movie(da, plotfunc=plotfunc)
+
+    if expected_empty:
+        with pytest.warns(UserWarning):
+            fig, ax, pp = mov.render_frame(1)
+            assert ax is None
+            assert pp is None
+            assert isinstance(fig, mpl.figure.Figure)
+
+    else:
+        fig, ax, pp = mov.render_frame(1)
+        assert isinstance(
+            ax, mpl.axes.Axes
+        )  # this needs to be tested for the projections aswell
+        assert isinstance(fig, mpl.figure.Figure)
+
+    # This needs to be tested more exensively, especially whith multiple axes
+
+
+def test_movie_preview():
+    da = test_dataarray()
+    mov = Movie(da)
+    mov.preview(0)
+    fig = plt.gcf()
+    assert mov.dpi == fig.dpi
 
 
 @pytest.mark.parametrize("frame_pattern", ["frame_%05d.png", "test%05d.png"])

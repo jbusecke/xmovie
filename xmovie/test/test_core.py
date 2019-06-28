@@ -73,7 +73,8 @@ def test_combine_ffmpeg_command(
     dir, fname, path, frame_pattern, framerate, ffmpeg_options
 ):
     cmd = _combine_ffmpeg_command(dir, fname, framerate, frame_pattern, ffmpeg_options)
-    assert cmd == 'ffmpeg -i "%s" -y %s -r %i "%s"' % (
+    assert cmd == 'ffmpeg -r %i -i "%s" -y %s -r %i "%s"' % (
+        framerate,
         os.path.join(dir, frame_pattern),
         ffmpeg_options,
         framerate,
@@ -141,8 +142,11 @@ def test_write_movie(tmpdir, moviename, remove_frames, framerate, ffmpeg_options
     else:
         assert all([fn.exists() for fn in filenames])
     assert m.exists()  # could test more stuff here I guess.
-    fps = cv2.VideoCapture(m.strpath).get(cv2.CAP_PROP_FPS)
+    video = cv2.VideoCapture(m.strpath)
+    fps = video.get(cv2.CAP_PROP_FPS)
     assert fps == framerate
+    total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    assert total_frames == len(da.time)
 
 
 @pytest.mark.parametrize("moviename", ["movie.mp4"])

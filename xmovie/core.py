@@ -151,7 +151,8 @@ def _combine_ffmpeg_command(
     sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options
 ):
     # we need `-y` because i can not properly diagnose the errors here...
-    command = 'ffmpeg -i "%s" -y %s -r %i "%s"' % (
+    command = 'ffmpeg -r %i -i "%s" -y %s -r %i "%s"' % (
+        framerate,
         os.path.join(sourcefolder, frame_pattern),
         ffmpeg_options,
         framerate,
@@ -166,7 +167,7 @@ def write_movie(
     frame_pattern="frame_%05d.png",
     remove_frames=True,
     verbose=False,
-    ffmpeg_options="-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p",
+    ffmpeg_options="-c:v libx264 -preset veryslow -crf 15 -pix_fmt yuv420p",
     framerate=20,
 ):
 

@@ -1,4 +1,9 @@
 # xmovie
+[![Build Status](https://travis-ci.com/jbusecke/xmovie.svg?branch=master)](https://travis-ci.com/jbusecke/xmovie)
+[![codecov](https://codecov.io/gh/jbusecke/xmovie/branch/master/graph/badge.svg)](https://codecov.io/gh/jbusecke/xmovie)
+<!-- [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) -->
+
+
 A simple way of creating beautiful movies from [xarray](https://github.com/pydata/xarray) objects.
 
 With ever increasing detail, modern scientific observations and model results

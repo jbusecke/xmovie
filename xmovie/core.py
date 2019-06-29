@@ -139,11 +139,8 @@ def convert_gif(
 
     print("GIF created at %s" % (gpath))
     if remove_movie:
-        try:
+        if os.path.exists(mpath):
             os.remove(mpath)
-        except:
-            warnings.warn("movie removal failed")
-            pass
     return p
 
 
@@ -178,14 +175,10 @@ def write_movie(
 
     print("Movie created at %s" % (moviename))
     if remove_frames:
-        try:
-            rem_name = frame_pattern.replace("%05d", "*")
-            for f in glob.glob(os.path.join(sourcefolder, rem_name)):
+        rem_name = frame_pattern.replace("%05d", "*")
+        for f in glob.glob(os.path.join(sourcefolder, rem_name)):
+            if os.path.exists(f):
                 os.remove(f)
-        except:
-            warnings.warn("frame removal failed")
-            pass
-
     return p
 
 
@@ -267,13 +260,14 @@ class Movie:
         else:
             warnings.warn(
                 "The provided `plotfunc` does not provide the expected number of output arguments.\
-            Expected a function `ax,pp =plotfunc(...)` but got %i output arguments. Inserting dummy values. This should not affect output. "
+            Expected a function `ax,pp =plotfunc(...)` but got %i output arguments. Inserting dummy values. This should not affect output. ",
+                UserWarning,
             )
             _ = self.plotfunc(self.data, fig, timestep, **self.kwargs)
             ax, pp = None, None
         return fig, ax, pp
 
-    def preview(self, timestep, debug=False):
+    def preview(self, timestep):
         """Creates preview frame of movie Class.
 
         Parameters
@@ -281,22 +275,11 @@ class Movie:
         timestep : int
             timestep(frame) for preview.
 
-        Returns
-        -------
-        fig : matplotlib.Figure
-            The frame figure
-        ax : matplotlib.axes
-            The axes of the plot
-        pp: matplolib plot handle
-            handle to the plotobject(s)
-
         """
         with plt.rc_context(
             {"figure.dpi": self.dpi, "figure.figsize": [self.width, self.height]}
         ):
             fig, ax, pp = self.render_frame(timestep)
-        if debug:
-            return fig, ax, pp
 
     def save_frames(self, odir, progress=False):
         """Save movie frames as picture files.

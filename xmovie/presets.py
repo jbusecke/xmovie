@@ -294,9 +294,7 @@ def rotating_globe(
     ax.set_title("")
     ax.set_global()
 
-    # set style
-
-    # the order should be optional? (I can pass z_order for each...)
+    # set style (TODO: move this to the basic function including the set style)
     if land:
         _add_land(ax, style)
 
@@ -310,6 +308,10 @@ def rotating_globe(
         # for now fixed locations
         gl.xlocator = mticker.FixedLocator(range(-180, 181, 30))
         gl.ylocator = mticker.FixedLocator(range(-90, 91, 30))
+    else:
+        gl = None
+    # i should output this to test the preset. Maybe a dict output for the pp and gl (and potentially others)?
+
     # need a way to do that for the outline too
 
     # possibly for future versions, but I need a way to increase results

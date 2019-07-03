@@ -7,6 +7,7 @@ import cartopy.feature as cfeature
 
 import shapely.geometry as sgeom
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 
 
 # Data treatment
@@ -257,6 +258,7 @@ def rotating_globe(
     lat_start=25,
     lat_rotations=0,
     land=False,
+    gridlines=False,
     coastline=True,
     style=None,
     debug=False,
@@ -292,18 +294,24 @@ def rotating_globe(
     ax.set_title("")
     ax.set_global()
 
-    # set style
-
-    # the order should be optional? (I can pass z_order for each...)
+    # set style (TODO: move this to the basic function including the set style)
     if land:
         _add_land(ax, style)
 
     if coastline:
         _add_coast(ax, style)
 
-    gl = ax.gridlines()
-    # Increase gridline res
-    gl.n_steps = 500
+    if gridlines:
+        gl = ax.gridlines()
+        # Increase gridline res
+        gl.n_steps = 500
+        # for now fixed locations
+        gl.xlocator = mticker.FixedLocator(range(-180, 181, 30))
+        gl.ylocator = mticker.FixedLocator(range(-90, 91, 30))
+    else:
+        gl = None
+    # i should output this to test the preset. Maybe a dict output for the pp and gl (and potentially others)?
+
     # need a way to do that for the outline too
 
     # possibly for future versions, but I need a way to increase results

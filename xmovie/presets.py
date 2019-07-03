@@ -7,6 +7,7 @@ import cartopy.feature as cfeature
 
 import shapely.geometry as sgeom
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 
 
 # Data treatment
@@ -257,6 +258,7 @@ def rotating_globe(
     lat_start=25,
     lat_rotations=0,
     land=False,
+    gridlines=False,
     coastline=True,
     style=None,
     debug=False,
@@ -301,9 +303,13 @@ def rotating_globe(
     if coastline:
         _add_coast(ax, style)
 
-    gl = ax.gridlines()
-    # Increase gridline res
-    gl.n_steps = 500
+    if gridlines:
+        gl = ax.gridlines()
+        # Increase gridline res
+        gl.n_steps = 500
+        # for now fixed locations
+        gl.xlocator = mticker.FixedLocator(range(-180, 181, 30))
+        gl.ylocator = mticker.FixedLocator(range(-90, 91, 30))
     # need a way to do that for the outline too
 
     # possibly for future versions, but I need a way to increase results

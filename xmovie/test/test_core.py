@@ -1,4 +1,5 @@
 from xmovie.core import (
+    _parse_plot_defaults,
     _check_plotfunc_output,
     _combine_ffmpeg_command,
     _execute_command,
@@ -17,9 +18,32 @@ import numpy as np
 import xarray as xr
 import os
 import cv2
+import dask.array as dsa
 
 
-def dummy_plotfunc(da, fig, timestep):
+def test_parse_plot_defaults():
+    # create dummy array
+    da = xr.DataArray(np.arange(20), dims=["x"])
+    with pytest.warns(UserWarning):
+        d = _parse_plot_defaults(da, {})
+    assert d["vmax"] == 19
+    assert d["vmin"] == 0
+    # deactivated while bug persists..
+    # assert d["cbar_kwargs"] == dict(extend="neither")
+    assert d["extend"] == "neither"
+    da = xr.DataArray(np.arange(20), dims=["x"]).chunk({"x": 1})
+    d = _parse_plot_defaults(da, {})
+    assert isinstance(da.data, dsa.Array)
+    assert not isinstance(d["vmin"], dsa.Array)
+    assert not isinstance(d["vmax"], dsa.Array)
+    with pytest.raises(RuntimeError):
+        _parse_plot_defaults(5, {})
+    for var in ["vmin", "vmax", "test"]:
+        expected = _parse_plot_defaults(da, {var: "input"})[var]
+        assert expected == "input"
+
+
+def dummy_plotfunc(da, fig, timestep, **kwargs):
     # a very simple plotfunc, which might be passed by the user
     ax = fig.subplots()
     da.isel(time=timestep).plot(ax=ax)
@@ -195,7 +219,7 @@ def test_convert_gif(
 @pytest.mark.parametrize("pixelwidth", [100, 500, 1920])
 @pytest.mark.parametrize("pixelheight", [100, 500, 1080])
 # combine them and also add str specs like 'HD' '1080' '4k'
-@pytest.mark.parametrize("framedim", ["time", "x", "wrong"])
+@pytest.mark.parametrize("framedim", ["time", "x"])
 @pytest.mark.parametrize("dpi", [50, 200])
 @pytest.mark.parametrize("plotfunc", [None, rotating_globe, dummy_plotfunc])
 def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
@@ -208,25 +232,33 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
         pixelheight=pixelheight,
         dpi=dpi,
     )
-    if framedim == "wrong":
-        with pytest.raises(ValueError):
-            mov = Movie(da, **kwargs)
+    mov = Movie(da, **kwargs)
+
+    if plotfunc is None:
+        assert mov.plotfunc == basic
     else:
-        mov = Movie(da, **kwargs)
+        assert mov.plotfunc == plotfunc
+    assert mov.plotfunc_n_outargs == _check_plotfunc_output(mov.plotfunc, mov.data)
 
-        if plotfunc is None:
-            assert mov.plotfunc == basic
-        else:
-            assert mov.plotfunc == plotfunc
-        assert mov.plotfunc_n_outargs == _check_plotfunc_output(mov.plotfunc, mov.data)
+    assert mov.dpi == dpi
+    assert mov.framedim == framedim
+    assert mov.pixelwidth == pixelwidth
+    assert mov.pixelheight == pixelheight
+    assert mov.dpi == dpi
+    assert mov.kwargs == _parse_plot_defaults(mov.data, mov.raw_kwargs)
+    # assures that none of the input options are not parsed
 
-        assert mov.dpi == dpi
-        assert mov.framedim == framedim
-        assert mov.pixelwidth == pixelwidth
-        assert mov.pixelheight == pixelheight
-        assert mov.dpi == dpi
-        assert mov.kwargs == {}
-        # assures that none of the input options are not parsed
+    # now test exceptions:
+    # non existent framedim
+    with pytest.raises(ValueError):
+        mov = Movie(da, framedim="wrong")
+    # passing dataset without plot_variable (this should error out)
+    with pytest.raises(ValueError):
+        ds = xr.Dataset({"some": test_dataarray(), "stuff": test_dataarray()})
+        mov = Movie(ds)
+
+    # this should work (this way one could pass a totally custom function)
+    mov = Movie(ds, input_check=False)
 
 
 @pytest.mark.parametrize(

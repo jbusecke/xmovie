@@ -7,8 +7,9 @@ import sys
 import glob
 import warnings
 import gc
+import xarray as xr
 
-from .presets import basic
+from .presets import _check_input, basic
 from subprocess import Popen, PIPE, STDOUT
 import matplotlib.pyplot as plt
 
@@ -25,11 +26,47 @@ except:
 
 # import xarray as xr
 # import dask.bag as db
+import dask.array as dsa
 
 
 # is it a good idea to set these here?
 # Needs to be dependent on dpi and videosize
 plt.rcParams.update({"font.size": 14})
+
+
+# Data treatment
+def _parse_plot_defaults(da, kwargs):
+    if isinstance(da, xr.DataArray):
+        data = da
+    else:
+        raise RuntimeError("input of type (%s) not supported yet." % type(da))
+
+    # check these explicitly to avoid any computation if these are set.
+    if "vmin" not in kwargs.keys():
+        warnings.warn(
+            "No `vmin` provided. Data limits are calculated from input. Depending on the input this can take long. Pass `vmin` to avoid this step",
+            UserWarning,
+        )
+        kwargs["vmin"] = data.min().data
+
+    if "vmax" not in kwargs.keys():
+        warnings.warn(
+            "No `vmax` provided. Data limits are calculated from input. Depending on the input this can take long. Pass `vmax` to avoid this step",
+            UserWarning,
+        )
+        kwargs["vmax"] = data.max().data
+
+    # There is a bug that prevents this from working...Ill have to fix that upstream.
+    # defaults["cbar_kwargs"] = dict(extend="neither")
+    # This works for now
+    kwargs.setdefault("extend", "neither")
+
+    # if any value is dask.array compute them here.
+    for k in ["vmin", "vmax"]:
+        if isinstance(kwargs[k], dsa.Array):
+            kwargs[k] = kwargs[k].compute()
+
+    return kwargs
 
 
 def _check_plotfunc_output(func, da):
@@ -214,6 +251,8 @@ class Movie:
         pixelheight=1080,
         dpi=200,
         frame_pattern="frame_%05d.png",
+        fieldname=None,
+        input_check=True,
         **kwargs
     ):
         self.pixelwidth = pixelwidth
@@ -228,14 +267,30 @@ class Movie:
             self.plotfunc = basic
         else:
             self.plotfunc = plotfunc
-        self.kwargs = kwargs
-        ##
-        # add kwargs to plotfunc
+        # set sensible defaults
+        self.raw_kwargs = kwargs
+
         # Check input
+
+        # Mandatory checks
+        # Check if `framedim` exists.
         if self.framedim not in list(self.data.dims):
             raise ValueError("Framedim (%s) not found in input data" % self.framedim)
         # Check the output of plotfunc
         self.plotfunc_n_outargs = _check_plotfunc_output(self.plotfunc, self.data)
+
+        # optional checks (these might need to be deactivated when using custom
+        # plot functions.)
+        if input_check:
+            if isinstance(self.data, xr.Dataset):
+                raise ValueError(
+                    "xmovie presets do not yet support the input of xr.Datasets. \
+                In order to use datasets as inputs, set `input_check` to False. \
+                Note that this requires you to manually set colorlimits etc."
+                )
+
+            # Set defaults
+            self.kwargs = _parse_plot_defaults(self.data, self.raw_kwargs)
 
     def render_frame(self, timestep):
         """renders complete figure (frame) for given timestep.

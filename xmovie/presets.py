@@ -10,26 +10,13 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
 
-# Data treatment
-def _get_plot_defaults(da):
-    if isinstance(da, xr.DataArray):
-        data = da
-    else:
-        raise RuntimeError("input of type (%s) not supported" % type(da))
-    defaults = dict([])
-    defaults["vmin"] = data.min().data
-    defaults["vmax"] = data.max().data
-    defaults["cbar_kwargs"] = dict(extend="neither")
-    return defaults
-
-
-def check_input(da, fieldname):
+def _check_input(da, fieldname):
     # pick the data_var to plot
     if isinstance(da, xr.Dataset):
         if fieldname is None:
             fieldname = list(da.data_vars)[0]
             warnings.warn(
-                "No plot_variable supplied. Defaults to `%s`" % fieldname, UserWarning
+                "No `fieldname` supplied. Defaults to `%s`" % fieldname, UserWarning
             )
         data = da[fieldname]
     elif isinstance(da, xr.DataArray):
@@ -51,7 +38,7 @@ def _core_plot(ax, data, plotmethod=None, **kwargs):
     if plotmethod == "contour":
         kwargs.pop("cbar_kwargs", None)
 
-    # I am probably recoding something from matplotlib...is ther a way to get
+    # I am probably recoding something from matplotlib...is there a way to get
     # the plot.something functionslity with a keyword?
     # For now do it the hard way
     if plotmethod is None:
@@ -78,17 +65,9 @@ def _core_plot(ax, data, plotmethod=None, **kwargs):
 
 
 def _base_plot(ax, base_data, timestamp, plotmethod=None, **kwargs):
-    # core plot call with updated defaults
-
-    # set sensible defaults for each plotmethod
-    plt_kwargs = _get_plot_defaults(base_data)
-
-    # update with supplied kwargs and map_style_kwargs
-    plt_kwargs.update(kwargs)
-
     # need to convert time to input variable
     data = base_data.isel(time=timestamp)
-    p = _core_plot(ax, data, plotmethod=plotmethod, **plt_kwargs)
+    p = _core_plot(ax, data, plotmethod=plotmethod, **kwargs)
     return p
 
 
@@ -240,7 +219,7 @@ def basic(
 ):
     # create axis
     ax = fig.subplots(subplot_kw=subplot_kw)
-    data = check_input(da, plot_variable)
+    data = _check_input(da, plot_variable)
     pp = _base_plot(ax, data, timestamp, plotmethod=plotmethod, **kwargs)
     return ax, pp
 
@@ -284,9 +263,9 @@ def rotating_globe(
     map_style_kwargs = dict(transform=ccrs.PlateCarree())
     kwargs.update(map_style_kwargs)
 
-    # create axis
+    # create axis (TODO:this should be handled by the basic preset )
     ax = fig.subplots(subplot_kw=subplot_kw)
-    data = check_input(da, plot_variable)
+    data = _check_input(da, plot_variable)
     pp = _base_plot(ax, data, timestamp, plotmethod=plotmethod, **kwargs)
 
     _set_style(fig, ax, pp, style=style)

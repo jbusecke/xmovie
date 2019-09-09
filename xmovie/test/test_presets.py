@@ -2,23 +2,13 @@ import xarray as xr
 import numpy as np
 import pytest
 from xmovie.presets import (
-    _get_plot_defaults,
-    check_input,
+    _check_input,
     _core_plot,
     _smooth_boundary_NearsidePerspective,
 )
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
-
-
-def test_get_plot_defaults():
-    # create dummy array
-    da = xr.DataArray(np.arange(20), dims=["x"])
-    d = _get_plot_defaults(da)
-    assert d["vmax"] == 19
-    assert d["vmin"] == 0
-    assert d["cbar_kwargs"] == dict(extend="neither")
 
 
 def test_check_input():
@@ -29,10 +19,10 @@ def test_check_input():
             "b": xr.DataArray(np.arange(4), dims=["y"]),
         }
     )
-    xr.testing.assert_identical(ds["a"], check_input(ds, None))
-    xr.testing.assert_identical(ds["b"], check_input(ds, "b"))
-    xr.testing.assert_identical(ds["a"], check_input(ds["a"], None))
-    xr.testing.assert_identical(ds["a"], check_input(ds["a"], "b"))
+    xr.testing.assert_identical(ds["a"], _check_input(ds, None))
+    xr.testing.assert_identical(ds["b"], _check_input(ds, "b"))
+    xr.testing.assert_identical(ds["a"], _check_input(ds["a"], None))
+    xr.testing.assert_identical(ds["a"], _check_input(ds["a"], "b"))
 
 
 @pytest.mark.parametrize(

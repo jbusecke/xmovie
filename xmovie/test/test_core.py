@@ -259,6 +259,7 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
 
     # this should work (this way one could pass a totally custom function)
     mov = Movie(ds, input_check=False)
+    assert mov.kwargs == kwargs #this still needs to be set
 
 
 @pytest.mark.parametrize(

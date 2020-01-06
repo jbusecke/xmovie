@@ -291,6 +291,8 @@ class Movie:
 
             # Set defaults
             self.kwargs = _parse_plot_defaults(self.data, self.raw_kwargs)
+        else:
+            self.kwargs = self.raw_kwargs
 
     def render_frame(self, timestep):
         """renders complete figure (frame) for given timestep.

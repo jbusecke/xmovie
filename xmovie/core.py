@@ -69,10 +69,10 @@ def _parse_plot_defaults(da, kwargs):
     return kwargs
 
 
-def _check_plotfunc_output(func, da):
+def _check_plotfunc_output(func, da, **kwargs):
     timestep = 0
     fig = plt.figure()
-    oargs = func(da, fig, timestep)
+    oargs = func(da, fig, timestep, **kwargs)
     # I just want the number of output args, delete plot
     plt.close(fig)
     if oargs is None:
@@ -272,13 +272,6 @@ class Movie:
 
         # Check input
 
-        # Mandatory checks
-        # Check if `framedim` exists.
-        if self.framedim not in list(self.data.dims):
-            raise ValueError("Framedim (%s) not found in input data" % self.framedim)
-        # Check the output of plotfunc
-        self.plotfunc_n_outargs = _check_plotfunc_output(self.plotfunc, self.data)
-
         # optional checks (these might need to be deactivated when using custom
         # plot functions.)
         if input_check:
@@ -293,6 +286,15 @@ class Movie:
             self.kwargs = _parse_plot_defaults(self.data, self.raw_kwargs)
         else:
             self.kwargs = self.raw_kwargs
+
+        # Mandatory checks
+        # Check if `framedim` exists.
+        if self.framedim not in list(self.data.dims):
+            raise ValueError("Framedim (%s) not found in input data" % self.framedim)
+        # Check the output of plotfunc
+        self.plotfunc_n_outargs = _check_plotfunc_output(
+            self.plotfunc, self.data, **self.kwargs
+        )
 
     def render_frame(self, timestep):
         """renders complete figure (frame) for given timestep.

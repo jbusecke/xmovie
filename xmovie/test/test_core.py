@@ -259,7 +259,7 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
 
     # this should work (this way one could pass a totally custom function)
     mov = Movie(ds, input_check=False)
-    assert mov.kwargs == {} #there are no kwargs set that are not used by Movie
+    assert mov.kwargs == {}  # there are no kwargs set that are not used by Movie
 
 
 @pytest.mark.parametrize(
@@ -344,3 +344,33 @@ def test_movie_save(
     print(path.exists())
     with pytest.raises(RuntimeError):
         mov.save(path.strpath, overwrite_existing=False)
+
+
+def test_plotfunc_kwargs(tmpdir):
+    """Test if kwargs are properly
+    propagated to the  plotfunction"""
+
+    def plotfunc(ds, fig, tt, test1=None, **kwargs):
+        if test1 is None:
+            raise RuntimeError("test1 cannot be None")
+
+    da = test_dataarray()
+    mov = Movie(da, plotfunc=plotfunc, test1=3)
+    mov.preview(0)
+    mov.save_frames(tmpdir)
+
+
+def test_plotfunc_kwargs_xfail(tmpdir):
+    pytest.xfail(
+        "if **kwargs is not in the function signature \
+        and the input is checked, this should error out."
+    )
+
+    def plotfunc(ds, fig, tt, test1=None):
+        if test1 is None:
+            raise RuntimeError("test1 cannot be None")
+
+    da = test_dataarray()
+    mov = Movie(da, plotfunc=plotfunc, test1=3)
+    mov.preview(0)
+    mov.save_frames(tmpdir)

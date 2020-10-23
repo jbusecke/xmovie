@@ -5,12 +5,13 @@ dependencies:
   - python=3.6
   - xarray
   - dask
+  - scipy
   - numpy
   - pytest
   - future
   - matplotlib
   - cartopy
-  #>0.17.0
+  - pykdtree
   - ffmpeg
   - opencv
   - pip:

@@ -1,8 +1,9 @@
 # xmovie
-[![Build Status](https://travis-ci.com/jbusecke/xmovie.svg?branch=master)](https://travis-ci.com/jbusecke/xmovie)
+[![Build Status](https://img.shields.io/github/workflow/status/xgcm/xgcm/CI?logo=github)](https://github.com/xgcm/xgcm/actions)
 [![codecov](https://codecov.io/gh/jbusecke/xmovie/branch/master/graph/badge.svg)](https://codecov.io/gh/jbusecke/xmovie)
-<!-- [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) -->
-
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![codecov](https://codecov.io/gh/jbusecke/xmovie/branch/master/graph/badge.svg)](https://codecov.io/gh/jbusecke/xmovie)
+[![pypi](https://badge.fury.io/py/xmovie.svg)](https://badge.fury.io/py/xmovie)
 
 A simple way of creating beautiful movies from [xarray](https://github.com/pydata/xarray) objects.
 
@@ -33,9 +34,10 @@ objects with preset plot functions - create a movie with only 2 lines of code.
 frame rendering.-->
 
 ## Installation
-Clone this repository with `$ git clone git@github.com:jbusecke/xmovie.git` and
-install it from source `$ python setup.py install`.
-Pip and conda distributions will be available soon.
+Run `pip install xmovie` to install.
+
+If you want to install from source, simply run `pip install git+https://github.com/jbusecke/xmovie.git`
+Conda distributions will be available soon
 
 >If you dont have [ssh keys](https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account) set up, you can use `$ git clone https://github.com/jbusecke/xmovie.git` and enter your github password.
 

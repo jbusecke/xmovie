@@ -1,8 +1,9 @@
 # xmovie
 [![Build Status](https://img.shields.io/github/workflow/status/xgcm/xgcm/CI?logo=github)](https://github.com/xgcm/xgcm/actions)
 [![codecov](https://codecov.io/gh/jbusecke/xmovie/branch/master/graph/badge.svg)](https://codecov.io/gh/jbusecke/xmovie)
-<!-- [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) -->
-
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![codecov](https://codecov.io/gh/jbusecke/xmovie/branch/master/graph/badge.svg)](https://codecov.io/gh/jbusecke/xmovie)
+[![pypi](https://badge.fury.io/py/xmovie.svg)](https://badge.fury.io/py/xmovie)
 
 A simple way of creating beautiful movies from [xarray](https://github.com/pydata/xarray) objects.
 

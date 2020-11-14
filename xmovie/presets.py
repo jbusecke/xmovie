@@ -64,9 +64,9 @@ def _core_plot(ax, data, plotmethod=None, **kwargs):
     return p
 
 
-def _base_plot(ax, base_data, timestamp, plotmethod=None, **kwargs):
+def _base_plot(ax, base_data, timestamp, framedim, plotmethod=None, **kwargs):
     # need to convert time to input variable
-    data = base_data.isel(time=timestamp)
+    data = base_data.isel({framedim:timestamp})
     p = _core_plot(ax, data, plotmethod=plotmethod, **kwargs)
     return p
 
@@ -215,12 +215,12 @@ def _add_coast(ax, style):
 
 ### Presets (should proabably put all others into a submodule)
 def basic(
-    da, fig, timestamp, plotmethod=None, plot_variable=None, subplot_kw=None, **kwargs
+    da, fig, timestamp, framedim="time", plotmethod=None, plot_variable=None, subplot_kw=None, **kwargs
 ):
     # create axis
     ax = fig.subplots(subplot_kw=subplot_kw)
     data = _check_input(da, plot_variable)
-    pp = _base_plot(ax, data, timestamp, plotmethod=plotmethod, **kwargs)
+    pp = _base_plot(ax, data, timestamp, framedim, plotmethod=plotmethod, **kwargs)
     return ax, pp
 
 
@@ -266,7 +266,7 @@ def rotating_globe(
     # create axis (TODO:this should be handled by the basic preset )
     ax = fig.subplots(subplot_kw=subplot_kw)
     data = _check_input(da, plot_variable)
-    pp = _base_plot(ax, data, timestamp, plotmethod=plotmethod, **kwargs)
+    pp = _base_plot(ax, data, timestamp, framedim, plotmethod=plotmethod, **kwargs)
 
     _set_style(fig, ax, pp, style=style)
 

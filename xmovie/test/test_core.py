@@ -232,6 +232,10 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
         pixelheight=pixelheight,
         dpi=dpi,
     )
+
+    # if not time, hide it to test changing default
+    if framedim!="time":
+        da=da.rename({"time":"something_else"})
     mov = Movie(da, **kwargs)
 
     if plotfunc is None:

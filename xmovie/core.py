@@ -69,10 +69,10 @@ def _parse_plot_defaults(da, kwargs):
     return kwargs
 
 
-def _check_plotfunc_output(func, da, **kwargs):
+def _check_plotfunc_output(func, da, framedim="time", **kwargs):
     timestep = 0
     fig = plt.figure()
-    oargs = func(da, fig, timestep, **kwargs)
+    oargs = func(da, fig, timestep, framedim, **kwargs)
     # I just want the number of output args, delete plot
     plt.close(fig)
     if oargs is None:
@@ -293,7 +293,7 @@ class Movie:
             raise ValueError("Framedim (%s) not found in input data" % self.framedim)
         # Check the output of plotfunc
         self.plotfunc_n_outargs = _check_plotfunc_output(
-            self.plotfunc, self.data, **self.kwargs
+            self.plotfunc, self.data, self.framedim, **self.kwargs
         )
 
     def render_frame(self, timestep):
@@ -315,14 +315,14 @@ class Movie:
         # produce dummy output for ax and pp if the plotfunc does not provide them
         if self.plotfunc_n_outargs == 2:
             # this should be the case for all presets provided by xmovie
-            ax, pp = self.plotfunc(self.data, fig, timestep, **self.kwargs)
+            ax, pp = self.plotfunc(self.data, fig, timestep, self.framedim, **self.kwargs)
         else:
             warnings.warn(
                 "The provided `plotfunc` does not provide the expected number of output arguments.\
             Expected a function `ax,pp =plotfunc(...)` but got %i output arguments. Inserting dummy values. This should not affect output. ",
                 UserWarning,
             )
-            _ = self.plotfunc(self.data, fig, timestep, **self.kwargs)
+            _ = self.plotfunc(self.data, fig, timestep, self.framedim, **self.kwargs)
             ax, pp = None, None
         return fig, ax, pp
 

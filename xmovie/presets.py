@@ -65,7 +65,6 @@ def _core_plot(ax, data, plotmethod=None, **kwargs):
 
 
 def _base_plot(ax, base_data, timestamp, framedim, plotmethod=None, **kwargs):
-    # need to convert time to input variable
     data = base_data.isel({framedim:timestamp})
     p = _core_plot(ax, data, plotmethod=plotmethod, **kwargs)
     return p

@@ -84,7 +84,14 @@ mov.save('movie_rotating.gif', progress=True)
 ```
 ![](docs/gifs/movie_rotating.gif)
 
-
+## Frame dimension
+By default, the movie passes through the `"time"` dimension of the DataArray, but
+this can be easily changed with the `framedim` argument:
+```python
+mov = Movie(ds.air, framedim='lon')
+mov.save('lon_movie.gif')
+```
+![](docs/gifs/lon_movie.gif)
 
 ## Modify plots
 The preset plot-functions each have a unique set of keyword arguments for custom looks, but they all support the `xarray` plotting modes via the `plotmethod` keyword.

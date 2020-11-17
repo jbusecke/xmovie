@@ -165,10 +165,10 @@ fig.subplots_adjust(wspace=0.6)
 
 ![a](docs/pics/static.png)
 
-All that is needed to wrap this into a function with the signature `func(ds, fig, timestamp, **kwargs)`, where `ds` is an xarray Dataset or DataArray, `fig` is a `matplotlib.figure` object and `timestamp` is an integer which indicates the movie frame.
+All that is needed to wrap this into a function with the signature `func(ds, fig, timestamp, framedim, **kwargs)`, where `ds` is an xarray Dataset or DataArray, `fig` is a `matplotlib.figure` object and `timestamp` is an integer which indicates the movie frame.
 
 ```
-def custom_plotfunc(ds, fig, tt):
+def custom_plotfunc(ds, fig, tt, framedim="time"):
     # Define station location for timeseries
     station = dict(x=100, y=150)
     ds_station = ds.sel(**station)
@@ -178,7 +178,7 @@ def custom_plotfunc(ds, fig, tt):
     # Map axis
     # Colorlimits need to be fixed or your video is going to cause seizures.
     # This is the only modification from the code above!
-    ds.isel(time=tt).plot(ax=ax1, vmin=ds.min(), vmax=ds.max(), cmap='RdBu_r')
+    ds.isel({framedim:tt}).plot(ax=ax1, vmin=ds.min(), vmax=ds.max(), cmap='RdBu_r')
     ax1.plot(station['x'], station['y'], marker='*', color='k' ,markersize=15)
     ax1.text(station['x']+4, station['y']+4, 'Station', color='k' )
     ax1.set_aspect(1)
@@ -186,8 +186,8 @@ def custom_plotfunc(ds, fig, tt):
     ax1.set_title('');
 
     # Time series
-    ds_station.isel(time=slice(0,tt+1)).plot.line(ax=ax2, x='time')
-    ax2.set_xlim(ds.time.min().data, ds.time.max().data)
+    ds_station.isel({framedim:slice(0,tt+1)}).plot.line(ax=ax2, x=framedim)
+    ax2.set_xlim(ds[framedim].min().data, ds[framedim].max().data)
     ax2.set_ylim(ds_station.min(), ds_station.max())
     ax2.set_title('Data at station');
 

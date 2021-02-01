@@ -43,10 +43,10 @@ def test_parse_plot_defaults():
         assert expected == "input"
 
 
-def dummy_plotfunc(da, fig, timestep, **kwargs):
+def dummy_plotfunc(da, fig, timestep, framedim, **kwargs):
     # a very simple plotfunc, which might be passed by the user
     ax = fig.subplots()
-    da.isel(time=timestep).plot(ax=ax)
+    da.isel({framedim:timestep}).plot(ax=ax)
 
 
 def test_check_plotfunc_output():
@@ -232,13 +232,17 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
         pixelheight=pixelheight,
         dpi=dpi,
     )
+
+    # if not time, hide it to test changing default
+    if framedim!="time":
+        da=da.rename({"time":"something_else"})
     mov = Movie(da, **kwargs)
 
     if plotfunc is None:
         assert mov.plotfunc == basic
     else:
         assert mov.plotfunc == plotfunc
-    assert mov.plotfunc_n_outargs == _check_plotfunc_output(mov.plotfunc, mov.data)
+    assert mov.plotfunc_n_outargs == _check_plotfunc_output(mov.plotfunc, mov.data, framedim)
 
     assert mov.dpi == dpi
     assert mov.framedim == framedim
@@ -350,7 +354,7 @@ def test_plotfunc_kwargs(tmpdir):
     """Test if kwargs are properly
     propagated to the  plotfunction"""
 
-    def plotfunc(ds, fig, tt, test1=None, **kwargs):
+    def plotfunc(ds, fig, tt, framedim="time", test1=None, **kwargs):
         if test1 is None:
             raise RuntimeError("test1 cannot be None")
 

@@ -399,7 +399,7 @@ class Movie:
         if da.dims[-1] != framedim:
             new_dims = list(da.dims)
             new_dims.append(new_dims.pop(new_dims.index(framedim))) # Move framedim to last axis
-            da = da.transpose(*new_dims)
+            da = da.transpose(..., framedim)
 
         da = da.chunk({self.framedim : 1}) # DataArray needs to have length-1 chunks in framedim
         chunk_dims = [ dim for dim in da.dims if dim != framedim ] # Create dimensions for each chunk
@@ -594,5 +594,4 @@ def _chunk_wrapper(np_array, save_and_close_frame, framedim, block_info=None, **
     
     # I think map_blocks expects something to be returned always so I return np.nan
     return np.nan
-
 

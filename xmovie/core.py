@@ -403,7 +403,7 @@ class Movie:
 
         da = da.chunk({self.framedim : 1}) # DataArray needs to have length-1 chunks in framedim
         chunk_dims = [ dim for dim in da.dims if dim != framedim ] # Create dimensions for each chunk
-                
+               
         def create_render_save_single_frame(xr_array, timestep):
             fig, ax, pp = self.render_single_frame(timestep)
             save_single_frame(
@@ -411,15 +411,28 @@ class Movie:
             )
             return
 
+ 
 
-        mapped_save_and_close_frames = darray.map_blocks(_chunk_wrapper,
-                                                         da.data,
-                                                         drop_axis=(0,1),  # drops all but 'framedim'
-                                                         chunks=(1,),  # needed because chunking is changing 
-                                                         dtype=np.float64,  # needed. _chunk_wrapper returns np.nan because None is not an option
-                                                         framedim=framedim,  # this and remaining arguments go to _chunk_wrapper
-                                                         dims=chunk_dims, coords=da.coords, attrs=da.attrs, # needed to reconstruct arrays
-                                                         save_and_close_frame=create_render_save_single_frame)
+#        mapped_save_and_close_frames = darray.map_blocks(_chunk_wrapper,
+#                                                         da.data,
+#                                                         drop_axis=(0,1),  # drops all but 'framedim'
+#                                                         chunks=(1,),  # needed because chunking is changing 
+#                                                         dtype=np.float64,  # needed. _chunk_wrapper returns np.nan because None is not an option
+#                                                         framedim=framedim,  # this and remaining arguments go to _chunk_wrapper
+#                                                         dims=chunk_dims, coords=da.coords, attrs=da.attrs, # needed to reconstruct arrays
+#                                                         save_and_close_frame=create_render_save_single_frame)
+        def create_render_save_single_frame2(xr_array, block_info=None):
+            timestep = block_info[None]['chunk-location'][-1]
+            fig, ax, pp = self.render_single_frame(timestep)
+            save_single_frame(
+                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
+            )
+            return xr_array
+
+
+        mapped_save_and_close_frames = da.map_blocks(func=create_render_save_single_frame2,
+                                                     template=da,
+                                                     )
         mapped_save_and_close_frames.compute()
         return 
     
@@ -555,7 +568,6 @@ def _chunk_wrapper(np_array, save_and_close_frame, framedim, block_info=None, **
     `save_and_close_frame`.
     '''
     import numpy as np
-    import xarray as xr
     
     # this tells us which chunk we are at
     # https://docs.dask.org/en/latest/array-api.html#dask.array.core.map_blocks

@@ -34,6 +34,9 @@ import dask.array as dsa
 plt.rcParams.update({"font.size": 14})
 
 
+
+
+
 # Data treatment
 def _parse_plot_defaults(da, kwargs):
     if isinstance(da, xr.DataArray):
@@ -141,10 +144,27 @@ def _check_ffmpeg_execute(command, verbose=False):
             )
 
 
+def _combine_ffmpeg_command(
+    sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options
+):
+    # we need `-y` because i can not properly diagnose the errors here...
+    command = 'ffmpeg -r %i -i "%s" -y %s -r %i "%s"' % (
+        framerate,
+        os.path.join(sourcefolder, frame_pattern),
+        ffmpeg_options,
+        framerate,
+        os.path.join(sourcefolder, moviename),
+    )
+    return command
+
+
 # def create_gif_palette(mpath, ppath="palette.png", verbose=False):
 #     command = "ffmpeg -y -i %s -vf palettegen %s" % (mpath, ppath)
 #     p = _check_ffmpeg_execute(command, verbose=verbose)
 #     return p
+
+
+
 
 
 def convert_gif(
@@ -181,21 +201,10 @@ def convert_gif(
     return p
 
 
-def _combine_ffmpeg_command(
-    sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options
-):
-    # we need `-y` because i can not properly diagnose the errors here...
-    command = 'ffmpeg -r %i -i "%s" -y %s -r %i "%s"' % (
-        framerate,
-        os.path.join(sourcefolder, frame_pattern),
-        ffmpeg_options,
-        framerate,
-        os.path.join(sourcefolder, moviename),
-    )
-    return command
 
 
-def write_movie(
+
+def combine_frames_into_movie(
     sourcefolder,
     moviename,
     frame_pattern="frame_%05d.png",
@@ -226,7 +235,8 @@ def write_movie(
 #     return fig
 
 
-def frame_save(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100):
+def save_single_frame(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100):
+    """ Saves a single frame of data from an already-created figure and then closes the figure """
     fig.savefig(
         os.path.join(odir, frame_pattern % (frame)),
         dpi=dpi,
@@ -296,7 +306,7 @@ class Movie:
             self.plotfunc, self.data, self.framedim, **self.kwargs
         )
 
-    def render_frame(self, timestep):
+    def render_single_frame(self, timestep):
         """renders complete figure (frame) for given timestep.
 
         Parameters
@@ -338,9 +348,9 @@ class Movie:
         with plt.rc_context(
             {"figure.dpi": self.dpi, "figure.figsize": [self.width, self.height]}
         ):
-            fig, ax, pp = self.render_frame(timestep)
+            fig, ax, pp = self.render_single_frame(timestep)
 
-    def save_frames(self, odir, progress=False):
+    def save_frames_serial(self, odir, progress=False):
         """Save movie frames as picture files.
 
         Parameters
@@ -359,10 +369,87 @@ class Movie:
             warnings.warn("Cant show progess bar at this point. Install tqdm")
 
         for fi in frame_range:
-            fig, ax, pp = self.render_frame(fi)
-            frame_save(
+            fig, ax, pp = self.render_single_frame(fi)
+            save_single_frame(
                 fig, fi, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
             )
+
+
+
+    def save_frames_parallel(self, odir):
+        '''
+
+        Parameters
+        ----------
+        odir : path
+            path to output directory
+        save_frame_and_close : function
+            user-provided plotting function that looks like  
+                "def save_frame_and_close(xarray_chunk, index)"          
+            It should expect one chunk of `da` provided as an xarray.DataArray
+            as well as the 'index' (along 'dim') of the provided chunk.
+            
+        Output
+        ------
+        mapped : list
+            dask.array. Calling compute on mapped will render frames.
+        '''
+        import numpy as np
+        import dask.array as darray
+
+        da = self.data
+        dim = self.framedim
+        
+        # Assumptions:
+        # 1. input is xarray.DataArray
+        # 2. `dim` has chunks of size 1
+        assert isinstance(da, xr.DataArray)
+        
+        # move 'dim' to be last dimension if not already
+        if da.dims[-1] != dim:
+            not_dim = list(set(list(da.dims)) - set([dim])) + [dim]
+            da = da.transpose(*not_dim)
+        da = da.chunk({self.framedim : 1})
+                
+                
+        def make_plot(xr_array, index):
+            import matplotlib.pyplot as plt
+            import matplotlib as mpl
+            f, ax = plt.subplots(1, 1, constrained_layout=True)
+            # ax=ax is required!
+            xr_array.plot(ax=ax,
+                          cmap=mpl.cm.RdBu, 
+                          extend='both',
+                          cbar_kwargs={'orientation': 'horizontal'})
+            f.savefig(f"{index:04d}.png")
+            # this prevents a warning that is issued when more than 20 figures are open.
+            # maybe it saves memory too?
+            plt.close(f)
+            del f
+            return
+
+        def create_render_save_single_frame(xr_array, timestep):
+            fig, ax, pp = self.render_single_frame(timestep)
+            save_single_frame(
+                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
+            )
+            return
+
+        
+        mapped = darray.map_blocks(_chunk_wrapper,
+                                   da.data,
+                                   drop_axis=(0,1),  # drops all but 'dim'
+                                   chunks=(1,),  # needed because chunking is changing 
+                                   dtype=np.float64,  # needed. _chunk_wrapper returns np.nan because None is not an option
+                                   dim=dim,  # this and remaining arguments go to _chunk_wrapper
+                                   dims=da.dims, coords=da.coords, attrs=da.attrs, # needed to reconstruct arrays
+                                   save_frame_and_close=create_render_save_single_frame)
+        mapped.compute()
+        return 
+    
+
+
+
 
     def save(
         self,
@@ -372,6 +459,7 @@ class Movie:
         progress=False,
         verbose=False,
         overwrite_existing=False,
+        parallel=False,
         framerate=15,
         ffmpeg_options="-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p",
         gif_palette=False,
@@ -451,10 +539,13 @@ class Movie:
                     )
 
         # print frames
-        self.save_frames(dirname, progress=progress)
+        if parallel:
+            self.save_frames_parallel(dirname)
+        else:
+            self.save_frames_serial(dirname, progress=progress)
 
         # Create movie
-        write_movie(
+        combine_frames_into_movie(
             dirname,
             moviefile,
             frame_pattern=self.frame_pattern,
@@ -478,45 +569,39 @@ class Movie:
                 gif_framerate=gif_framerate,
             )
 
-    # def save_parallel(
-    #     self, odir, da, plotfunc, framedim, partition_size=5, func_kwargs={}
-    # ):
-    #     """Save movie frames out to file.
-    #
-    #     Parameters
-    #     ----------
-    #     odir : path
-    #         path to output directory
-    #     da : xr.Dataset/xr.DataArray
-    #         Input xarray object.
-    #     plotfunc : func
-    #         plotting function.
-    #     framedim : type
-    #         Dimension of `da` which represents the frames (e.g. time).
-    #     partition_size : type
-    #         Size of dask bags to be computed in parallel (the default is 20).
-    #     func_kwargs : dict
-    #         optional arguments passed to func (the default is {}).
-    #
-    #     Returns
-    #     -------
-    #     type
-    #         Description of returned object.
-    #
-    #     """
-    #     if isinstance(da, xr.DataArray):
-    #         dummy_data = da
-    #     elif isinstance(da, xr.Dataset):
-    #         dummy_data = da[list(da.data_vars)[0]]
-    #     else:
-    #         raise ValueError("Input has to be xarray object. Is %s" % type(da))
-    #
-    #     frames = range(len(dummy_data[framedim].data))
-    #     frame_bag = db.from_sequence(frames, partition_size=partition_size)
-    #     frame_bag.map(
-    #         self.frame_save,
-    #         odir=odir,
-    #         da=da,
-    #         plotfunc=plotfunc,
-    #         func_kwargs=func_kwargs,
-    #     ).compute(processes=False)
+
+def _chunk_wrapper(np_array, save_frame_and_close, dim, block_info=None, **kwargs):
+    ''' 
+    This function is passed to `dask.array.map_blocks`. It will receive
+    individual chunks as numpy arrays as well as the `dims`, `coords` and
+    `attrs` required to convert the chunk (numpy) to a DataArray (xarray).
+    The converted chunk is then passed to the user's plotting function
+    `save_frame_and_close`.
+    '''
+    import numpy as np
+    import xarray as xr
+    
+    # this tells us which chunk we are at
+    # https://docs.dask.org/en/latest/array-api.html#dask.array.core.map_blocks
+    index = block_info[None]['chunk-location'][-1]
+    
+    coords = kwargs.get('coords')
+    dims = kwargs.get('dims')
+    attrs = kwargs.get('attrs')
+    
+    if coords:
+        # subset coords to the right index
+        coords = coords.to_dataset().isel({dim: index}).coords
+    
+    xr_array = xr.DataArray(np_array.squeeze(),
+                            dims=set(dims)-set([dim]),
+                            coords=coords,
+                            attrs=attrs)
+    
+    # call user's plotting function
+    save_frame_and_close(xr_array, index)
+    
+    # I think map_blocks expects something to be returned always so I return np.nan
+    return np.nan
+
+

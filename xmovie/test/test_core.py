@@ -4,8 +4,8 @@ from xmovie.core import (
     _combine_ffmpeg_command,
     _execute_command,
     _check_ffmpeg_execute,
-    frame_save,
-    write_movie,
+    save_frame,
+    combine_frames_into_movie,
     convert_gif,
     Movie,
 )
@@ -65,7 +65,7 @@ def test_frame_save(tmpdir, frame, frame_pattern, dpi, w, h):
     # Create Figure
     # fig = plt.figure()
     fig = plt.figure(figsize=[w / dpi, h / dpi])
-    frame_save(fig, frame, odir=tmpdir, frame_pattern=frame_pattern, dpi=dpi)
+    save_frame(fig, frame, odir=tmpdir, frame_pattern=frame_pattern, dpi=dpi)
     filename = tmpdir.join(frame_pattern % frame)
     img = Image.open(filename.strpath)
     pixel_w, pixel_h = img.size
@@ -152,9 +152,9 @@ def test_write_movie(tmpdir, moviename, remove_frames, framerate, ffmpeg_options
     m = tmpdir.join(moviename)
     da = test_dataarray()
     mov = Movie(da)
-    mov.save_frames(tmpdir)
+    mov.save_frames_serial(tmpdir)
     filenames = [tmpdir.join(frame_pattern % ff) for ff in range(len(da.time))]
-    write_movie(
+    combine_frames_into_movie(
         tmpdir,
         moviename,
         remove_frames=remove_frames,
@@ -189,9 +189,9 @@ def test_convert_gif(
 
     da = test_dataarray()
     mov = Movie(da)
-    mov.save_frames(tmpdir)
+    mov.save_frames_serial(tmpdir)
 
-    write_movie(tmpdir, moviename)
+    combine_frames_into_movie(tmpdir, moviename)
 
     convert_gif(
         mpath,
@@ -302,7 +302,7 @@ def test_movie_preview():
 def test_movie_save_frames(tmpdir, frame_pattern):
     da = test_dataarray()
     mov = Movie(da, frame_pattern=frame_pattern)
-    mov.save_frames(tmpdir)
+    mov.save_frames_serial(tmpdir)
     filenames = [tmpdir.join(frame_pattern % ff) for ff in range(len(da.time))]
     assert all([fn.exists() for fn in filenames])
 
@@ -361,7 +361,7 @@ def test_plotfunc_kwargs(tmpdir):
     da = test_dataarray()
     mov = Movie(da, plotfunc=plotfunc, test1=3)
     mov.preview(0)
-    mov.save_frames(tmpdir)
+    mov.save_frames_serial(tmpdir)
 
 
 def test_plotfunc_kwargs_xfail(tmpdir):
@@ -377,4 +377,4 @@ def test_plotfunc_kwargs_xfail(tmpdir):
     da = test_dataarray()
     mov = Movie(da, plotfunc=plotfunc, test1=3)
     mov.preview(0)
-    mov.save_frames(tmpdir)
+    mov.save_frames_serial(tmpdir)

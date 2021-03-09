@@ -1,3 +1,4 @@
 __version__ = "0.1.0"
 from .core import Movie
 from .presets import rotating_globe
+print("Testing ... 0")

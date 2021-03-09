@@ -350,6 +350,8 @@ class Movie:
         ):
             fig, ax, pp = self.render_single_frame(timestep)
 
+
+
     def save_frames_serial(self, odir, progress=False):
         """Save movie frames as picture files.
 
@@ -368,66 +370,40 @@ class Movie:
         elif ~tqdm_avail and progress:
             warnings.warn("Cant show progess bar at this point. Install tqdm")
 
-        for fi in frame_range:
-            fig, ax, pp = self.render_single_frame(fi)
+        for timestep in frame_range:
+            fig, ax, pp = self.render_single_frame(timestep)
             save_single_frame(
-                fig, fi, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
+                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
             )
 
 
 
     def save_frames_parallel(self, odir):
         '''
+        Saves all frames in parallel using dask.map_blocks.
 
         Parameters
         ----------
         odir : path
             path to output directory
-        save_frame_and_close : function
-            user-provided plotting function that looks like  
-                "def save_frame_and_close(xarray_chunk, index)"          
-            It should expect one chunk of `da` provided as an xarray.DataArray
-            as well as the 'index' (along 'dim') of the provided chunk.
-            
-        Output
-        ------
-        mapped : list
-            dask.array. Calling compute on mapped will render frames.
         '''
         import numpy as np
         import dask.array as darray
 
         da = self.data
-        dim = self.framedim
+        framedim = self.framedim
         
-        # Assumptions:
-        # 1. input is xarray.DataArray
-        # 2. `dim` has chunks of size 1
         assert isinstance(da, xr.DataArray)
         
-        # move 'dim' to be last dimension if not already
-        if da.dims[-1] != dim:
-            not_dim = list(set(list(da.dims)) - set([dim])) + [dim]
-            da = da.transpose(*not_dim)
-        da = da.chunk({self.framedim : 1})
-                
-                
-        def make_plot(xr_array, index):
-            import matplotlib.pyplot as plt
-            import matplotlib as mpl
-            f, ax = plt.subplots(1, 1, constrained_layout=True)
-            # ax=ax is required!
-            xr_array.plot(ax=ax,
-                          cmap=mpl.cm.RdBu, 
-                          extend='both',
-                          cbar_kwargs={'orientation': 'horizontal'})
-            f.savefig(f"{index:04d}.png")
-            # this prevents a warning that is issued when more than 20 figures are open.
-            # maybe it saves memory too?
-            plt.close(f)
-            del f
-            return
+        # move 'framedim' to be last dimension if not already
+        if da.dims[-1] != framedim:
+            new_dims = list(da.dims)
+            new_dims.append(new_dims.pop(new_dims.index(framedim))) # Move framedim to last axis
+            da = da.transpose(*new_dims)
 
+        da = da.chunk({self.framedim : 1}) # DataArray needs to have length-1 chunks in framedim
+        chunk_dims = [ dim for dim in da.dims if dim != framedim ] # Create dimensions for each chunk
+                
         def create_render_save_single_frame(xr_array, timestep):
             fig, ax, pp = self.render_single_frame(timestep)
             save_single_frame(
@@ -435,16 +411,16 @@ class Movie:
             )
             return
 
-        
-        mapped = darray.map_blocks(_chunk_wrapper,
-                                   da.data,
-                                   drop_axis=(0,1),  # drops all but 'dim'
-                                   chunks=(1,),  # needed because chunking is changing 
-                                   dtype=np.float64,  # needed. _chunk_wrapper returns np.nan because None is not an option
-                                   dim=dim,  # this and remaining arguments go to _chunk_wrapper
-                                   dims=da.dims, coords=da.coords, attrs=da.attrs, # needed to reconstruct arrays
-                                   save_frame_and_close=create_render_save_single_frame)
-        mapped.compute()
+
+        mapped_save_and_close_frames = darray.map_blocks(_chunk_wrapper,
+                                                         da.data,
+                                                         drop_axis=(0,1),  # drops all but 'framedim'
+                                                         chunks=(1,),  # needed because chunking is changing 
+                                                         dtype=np.float64,  # needed. _chunk_wrapper returns np.nan because None is not an option
+                                                         framedim=framedim,  # this and remaining arguments go to _chunk_wrapper
+                                                         dims=chunk_dims, coords=da.coords, attrs=da.attrs, # needed to reconstruct arrays
+                                                         save_and_close_frame=create_render_save_single_frame)
+        mapped_save_and_close_frames.compute()
         return 
     
 
@@ -570,20 +546,23 @@ class Movie:
             )
 
 
-def _chunk_wrapper(np_array, save_frame_and_close, dim, block_info=None, **kwargs):
+def _chunk_wrapper(np_array, save_and_close_frame, framedim, block_info=None, **kwargs):
     ''' 
     This function is passed to `dask.array.map_blocks`. It will receive
     individual chunks as numpy arrays as well as the `dims`, `coords` and
     `attrs` required to convert the chunk (numpy) to a DataArray (xarray).
     The converted chunk is then passed to the user's plotting function
-    `save_frame_and_close`.
+    `save_and_close_frame`.
     '''
     import numpy as np
     import xarray as xr
     
     # this tells us which chunk we are at
     # https://docs.dask.org/en/latest/array-api.html#dask.array.core.map_blocks
-    index = block_info[None]['chunk-location'][-1]
+    if block_info is not None:
+        index = block_info[None]['chunk-location'][-1]
+    else:
+        index = kwargs.get("index")
     
     coords = kwargs.get('coords')
     dims = kwargs.get('dims')
@@ -591,15 +570,15 @@ def _chunk_wrapper(np_array, save_frame_and_close, dim, block_info=None, **kwarg
     
     if coords:
         # subset coords to the right index
-        coords = coords.to_dataset().isel({dim: index}).coords
+        coords = coords.to_dataset().isel({framedim : index}).coords
     
     xr_array = xr.DataArray(np_array.squeeze(),
-                            dims=set(dims)-set([dim]),
+                            dims=dims,
                             coords=coords,
                             attrs=attrs)
     
     # call user's plotting function
-    save_frame_and_close(xr_array, index)
+    save_and_close_frame(xr_array, index)
     
     # I think map_blocks expects something to be returned always so I return np.nan
     return np.nan

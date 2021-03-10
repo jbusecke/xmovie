@@ -307,6 +307,7 @@ def test_movie_save_frames(tmpdir, frame_pattern):
     assert all([fn.exists() for fn in filenames])
 
 
+@pytest.mark.parametrize("parallel", [True, False])
 @pytest.mark.parametrize("filename", ["movie.mp4", "movie.gif"])
 @pytest.mark.parametrize("gif_palette", [True, False])
 @pytest.mark.parametrize("framerate, gif_framerate", [(10, 8), (24, 15), (7, 4)])
@@ -318,7 +319,7 @@ def test_movie_save_frames(tmpdir, frame_pattern):
     ],
 )
 def test_movie_save(
-    tmpdir, filename, gif_palette, framerate, gif_framerate, ffmpeg_options
+    tmpdir, parallel, filename, gif_palette, framerate, gif_framerate, ffmpeg_options
 ):
     print(gif_palette)
     # Need more tests for progress, verbose, overwriting
@@ -331,10 +332,13 @@ def test_movie_save(
         framerate=framerate,
         gif_framerate=gif_framerate,
         ffmpeg_options=ffmpeg_options,
+        parallel=parallel,
     )
+
 
     assert path.exists()
     # I should also check if no other files were created. For later
+
 
     # Check relevant fps of output file
     if ".mp4" in filename:
@@ -343,6 +347,7 @@ def test_movie_save(
     elif ".gif" in filename:
         fps = 1000 / Image.open(path.strpath).info["duration"]
         assert np.ceil(fps) == gif_framerate
+
 
     # Check overwriting
     print(path.exists())

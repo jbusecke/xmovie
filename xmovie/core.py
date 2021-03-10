@@ -393,14 +393,6 @@ class Movie:
         da = self.data
         framedim = self.framedim
         
-        assert isinstance(da, xr.DataArray)
-        
-        # move 'framedim' to be last dimension if not already
-        if da.dims[-1] != framedim:
-            new_dims = list(da.dims)
-            new_dims.append(new_dims.pop(new_dims.index(framedim))) # Move framedim to last axis
-            da = da.transpose(..., framedim)
-
         da = da.chunk({self.framedim : 1}) # DataArray needs to have length-1 chunks in framedim
         chunk_dims = [ dim for dim in da.dims if dim != framedim ] # Create dimensions for each chunk
                

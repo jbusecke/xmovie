@@ -4,7 +4,7 @@ from xmovie.core import (
     _combine_ffmpeg_command,
     _execute_command,
     _check_ffmpeg_execute,
-    save_frame,
+    save_single_frame,
     combine_frames_into_movie,
     convert_gif,
     Movie,

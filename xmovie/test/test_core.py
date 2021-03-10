@@ -65,7 +65,7 @@ def test_frame_save(tmpdir, frame, frame_pattern, dpi, w, h):
     # Create Figure
     # fig = plt.figure()
     fig = plt.figure(figsize=[w / dpi, h / dpi])
-    save_frame(fig, frame, odir=tmpdir, frame_pattern=frame_pattern, dpi=dpi)
+    save_single_frame(fig, frame, odir=tmpdir, frame_pattern=frame_pattern, dpi=dpi)
     filename = tmpdir.join(frame_pattern % frame)
     img = Image.open(filename.strpath)
     pixel_w, pixel_h = img.size

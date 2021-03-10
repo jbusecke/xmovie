@@ -275,13 +275,13 @@ def test_movie_render_frame(plotfunc, expected_empty):
 
     if expected_empty:
         with pytest.warns(UserWarning):
-            fig, ax, pp = mov.render_frame(1)
+            fig, ax, pp = mov.render_single_frame(1)
             assert ax is None
             assert pp is None
             assert isinstance(fig, mpl.figure.Figure)
 
     else:
-        fig, ax, pp = mov.render_frame(1)
+        fig, ax, pp = mov.render_single_frame(1)
         assert isinstance(
             ax, mpl.axes.Axes
         )  # this needs to be tested for the projections aswell

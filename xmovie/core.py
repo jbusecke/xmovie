@@ -378,7 +378,7 @@ class Movie:
 
 
 
-    def save_frames_parallel(self, odir):
+    def save_frames_parallel(self, odir, parallel_compute_kwargs=dict()):
         '''
         Saves all frames in parallel using dask.map_blocks.
 
@@ -419,7 +419,7 @@ class Movie:
                                                      args=(framedim,),
                                                      template=xr.ones_like(da[framedim]).chunk({framedim:1}),
                                                      )
-        mapped_save_and_close_frames.compute(scheduler="single-threaded")
+        mapped_save_and_close_frames.compute(**parallel_compute_kwargs)
         return 
     
 
@@ -435,6 +435,7 @@ class Movie:
         verbose=False,
         overwrite_existing=False,
         parallel=False,
+        parallel_compute_kwargs=dict(),
         framerate=15,
         ffmpeg_options="-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p",
         gif_palette=False,
@@ -515,7 +516,7 @@ class Movie:
 
         # print frames
         if parallel:
-            self.save_frames_parallel(dirname)
+            self.save_frames_parallel(dirname, parallel_compute_kwargs=parallel_compute_kwargs)
         else:
             self.save_frames_serial(dirname, progress=progress)
 

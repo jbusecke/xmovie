@@ -421,17 +421,19 @@ class Movie:
 #                                                         framedim=framedim,  # this and remaining arguments go to _chunk_wrapper
 #                                                         dims=chunk_dims, coords=da.coords, attrs=da.attrs, # needed to reconstruct arrays
 #                                                         save_and_close_frame=create_render_save_single_frame)
-        def create_render_save_single_frame2(xr_array, block_info=None):
-            timestep = block_info[None]['chunk-location'][-1]
+        def create_render_save_single_frame2(xr_array, total_time, framedim):
+            chunk_time = xr_array[framedim]
+            timestep = abs(total_time - chunk_time).argmin(framedim).item()
             fig, ax, pp = self.render_single_frame(timestep)
             save_single_frame(
                 fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
             )
-            return xr_array
+            return chunk_time
 
 
         mapped_save_and_close_frames = da.map_blocks(func=create_render_save_single_frame2,
-                                                     template=da,
+                                                     args=(da.time, framedim),
+                                                     template=xr.DataArray(np.ones(da.time.shape)).chunk(dict(time=1)),
                                                      )
         mapped_save_and_close_frames.compute()
         return 

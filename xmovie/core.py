@@ -404,38 +404,22 @@ class Movie:
         da = da.chunk({self.framedim : 1}) # DataArray needs to have length-1 chunks in framedim
         chunk_dims = [ dim for dim in da.dims if dim != framedim ] # Create dimensions for each chunk
                
-        def create_render_save_single_frame(xr_array, timestep):
+
+        total_time = da[framedim]
+        def create_render_save_single_frame2(xr_array, framedim):
+            time_of_chunk = xr_array[framedim]
+            timestep = abs(total_time - time_of_chunk[0]).argmin().item() # get index of chunk in framedim
+
             fig, ax, pp = self.render_single_frame(timestep)
-            save_single_frame(
-                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
-            )
-            return
+            save_single_frame(fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi)
 
- 
-
-#        mapped_save_and_close_frames = darray.map_blocks(_chunk_wrapper,
-#                                                         da.data,
-#                                                         drop_axis=(0,1),  # drops all but 'framedim'
-#                                                         chunks=(1,),  # needed because chunking is changing 
-#                                                         dtype=np.float64,  # needed. _chunk_wrapper returns np.nan because None is not an option
-#                                                         framedim=framedim,  # this and remaining arguments go to _chunk_wrapper
-#                                                         dims=chunk_dims, coords=da.coords, attrs=da.attrs, # needed to reconstruct arrays
-#                                                         save_and_close_frame=create_render_save_single_frame)
-        def create_render_save_single_frame2(xr_array, total_time, framedim):
-            chunk_time = xr_array[framedim]
-            timestep = abs(total_time - chunk_time).argmin(framedim).item()
-            fig, ax, pp = self.render_single_frame(timestep)
-            save_single_frame(
-                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
-            )
-            return chunk_time
-
+            return time_of_chunk
 
         mapped_save_and_close_frames = da.map_blocks(func=create_render_save_single_frame2,
-                                                     args=(da.time, framedim),
-                                                     template=xr.DataArray(np.ones(da.time.shape)).chunk(dict(time=1)),
+                                                     args=(framedim,),
+                                                     template=xr.ones_like(da[framedim]).chunk({framedim:1}),
                                                      )
-        mapped_save_and_close_frames.compute()
+        mapped_save_and_close_frames.compute(scheduler="single-threaded")
         return 
     
 

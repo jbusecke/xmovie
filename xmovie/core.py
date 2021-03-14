@@ -378,7 +378,8 @@ class Movie:
 
 
 
-    def save_frames_parallel(self, odir, parallel_compute_kwargs=dict()):
+    def save_frames_parallel(self, odir, progress=False, 
+                             parallel_compute_kwargs=dict()):
         '''
         Saves all frames in parallel using dask.map_blocks.
 
@@ -411,7 +412,13 @@ class Movie:
                                                      args=(framedim,),
                                                      template=xr.ones_like(da[framedim]).chunk({framedim:1}),
                                                      )
-        mapped_save_and_close_frames.compute(**parallel_compute_kwargs)
+        if progress:
+            from dask.diagnostics import ProgressBar as context
+        else:
+            from contextlib import nullcontext as context
+
+        with context():
+            mapped_save_and_close_frames.compute(**parallel_compute_kwargs)
         return 
     
 
@@ -508,7 +515,8 @@ class Movie:
 
         # print frames
         if parallel:
-            self.save_frames_parallel(dirname, parallel_compute_kwargs=parallel_compute_kwargs)
+            self.save_frames_parallel(dirname, progress=progress,
+                                      parallel_compute_kwargs=parallel_compute_kwargs)
         else:
             self.save_frames_serial(dirname, progress=progress)
 

@@ -546,39 +546,3 @@ class Movie:
             )
 
 
-def _chunk_wrapper(np_array, save_and_close_frame, framedim, block_info=None, **kwargs):
-    ''' 
-    This function is passed to `dask.array.map_blocks`. It will receive
-    individual chunks as numpy arrays as well as the `dims`, `coords` and
-    `attrs` required to convert the chunk (numpy) to a DataArray (xarray).
-    The converted chunk is then passed to the user's plotting function
-    `save_and_close_frame`.
-    '''
-    import numpy as np
-    
-    # this tells us which chunk we are at
-    # https://docs.dask.org/en/latest/array-api.html#dask.array.core.map_blocks
-    if block_info is not None:
-        index = block_info[None]['chunk-location'][-1]
-    else:
-        index = kwargs.get("index")
-    
-    coords = kwargs.get('coords')
-    dims = kwargs.get('dims')
-    attrs = kwargs.get('attrs')
-    
-    if coords:
-        # subset coords to the right index
-        coords = coords.to_dataset().isel({framedim : index}).coords
-    
-    xr_array = xr.DataArray(np_array.squeeze(),
-                            dims=dims,
-                            coords=coords,
-                            attrs=attrs)
-    
-    # call user's plotting function
-    save_and_close_frame(xr_array, index)
-    
-    # I think map_blocks expects something to be returned always so I return np.nan
-    return np.nan
-

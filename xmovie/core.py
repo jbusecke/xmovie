@@ -413,12 +413,12 @@ class Movie:
                                                      template=xr.ones_like(da[framedim]).chunk({framedim:1}),
                                                      )
         if progress:
-            from dask.diagnostics import ProgressBar as context
+            from dask.diagnostics import ProgressBar
+            with ProgressBar():
+                mapped_save_and_close_frames.compute(**parallel_compute_kwargs)
         else:
-            from contextlib import nullcontext as context
-
-        with context():
             mapped_save_and_close_frames.compute(**parallel_compute_kwargs)
+
         return 
     
 

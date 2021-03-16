@@ -360,7 +360,7 @@ class Movie:
         odir : path
             path to output directory
         progress : type
-            Show progress bar. Requires
+            Show progress bar. Requires tqdm.
 
         """
         # create range of frames
@@ -387,6 +387,11 @@ class Movie:
         ----------
         odir : path
             path to output directory
+        progress : Bool
+            Whether or not to show a progress bar.
+        parallel_compute_kwargs : dict
+            Keyword arguments to pass t dask's `compute()` function.
+
         '''
         import numpy as np
         import dask.array as darray
@@ -464,6 +469,10 @@ class Movie:
         overwrite_existing : Bool
             Set to overwrite existing files with `filename`
             (the default is False).
+        parallel : Bool
+            Whether or not to use dask to save the frames in parallel.
+        parallel_compute_kwargs : dict
+            Keyword arguments to pass to dask's `compute()` function.
         framerate : int
             Frames per second for the output movie file. Only relevant for '.mp4' files.
             (the default is 15)

@@ -402,7 +402,7 @@ class Movie:
                
 
         total_time = da[framedim]
-        def create_render_save_single_frame2(xr_array, framedim):
+        def _save_single_frame_parallel(xr_array, framedim):
             time_of_chunk = xr_array[framedim]
             timestep = abs(total_time - time_of_chunk[0]).argmin().item() # get index of chunk in framedim
 
@@ -411,7 +411,7 @@ class Movie:
 
             return time_of_chunk
 
-        mapped_save_and_close_frames = da.map_blocks(func=create_render_save_single_frame2,
+        mapped_save_and_close_frames = da.map_blocks(func=_save_single_frame_parallel,
                                                      args=(framedim,),
                                                      template=xr.ones_like(da[framedim]).chunk({framedim:1}),
                                                      )

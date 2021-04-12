@@ -411,11 +411,10 @@ class Movie:
 
             return time_of_chunk
 
-        mapped_save_and_close_frames = da.map_blocks(func=_save_single_frame_parallel,
-                                                     args=(framedim,),
-                                                     template=xr.ones_like(da[framedim]).chunk({framedim:1}),
-                                                     )
-        mapped_save_and_close_frames.compute(**parallel_compute_kwargs)
+        da.map_blocks(func=_save_single_frame_parallel,
+                      args=(framedim,),
+                      template=xr.ones_like(da[framedim]).chunk({framedim:1}),
+                      ).compute(**parallel_compute_kwargs)
         return 
     
 

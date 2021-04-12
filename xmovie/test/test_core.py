@@ -46,7 +46,7 @@ def test_parse_plot_defaults():
 def dummy_plotfunc(da, fig, timestep, framedim, **kwargs):
     # a very simple plotfunc, which might be passed by the user
     ax = fig.subplots()
-    da.isel({framedim:timestep}).plot(ax=ax)
+    da.isel({framedim: timestep}).plot(ax=ax)
 
 
 def test_check_plotfunc_output():
@@ -234,15 +234,17 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
     )
 
     # if not time, hide it to test changing default
-    if framedim!="time":
-        da=da.rename({"time":"something_else"})
+    if framedim != "time":
+        da = da.rename({"time": "something_else"})
     mov = Movie(da, **kwargs)
 
     if plotfunc is None:
         assert mov.plotfunc == basic
     else:
         assert mov.plotfunc == plotfunc
-    assert mov.plotfunc_n_outargs == _check_plotfunc_output(mov.plotfunc, mov.data, framedim)
+    assert mov.plotfunc_n_outargs == _check_plotfunc_output(
+        mov.plotfunc, mov.data, framedim
+    )
 
     assert mov.dpi == dpi
     assert mov.framedim == framedim
@@ -325,6 +327,8 @@ def test_movie_save(
     # Need more tests for progress, verbose, overwriting
     path = tmpdir.join(filename)
     da = test_dataarray()
+    if parallel:
+        da = da.chunk({"time": 1})
     mov = Movie(da)
     mov.save(
         path.strpath,
@@ -335,10 +339,8 @@ def test_movie_save(
         parallel=parallel,
     )
 
-
     assert path.exists()
     # I should also check if no other files were created. For later
-
 
     # Check relevant fps of output file
     if ".mp4" in filename:
@@ -348,11 +350,37 @@ def test_movie_save(
         fps = 1000 / Image.open(path.strpath).info["duration"]
         assert np.ceil(fps) == gif_framerate
 
-
     # Check overwriting
     print(path.exists())
     with pytest.raises(RuntimeError):
         mov.save(path.strpath, overwrite_existing=False)
+
+
+def test_movie_save_parallel_no_dask(tmpdir):
+    path = tmpdir.join("movie.mp4")
+    da = test_dataarray()
+    mov = Movie(da)
+    with pytest.raises(ValueError) as excinfo:
+        mov.save(
+            path.strpath,
+            parallel=True,
+        )
+
+    assert "Input data needs to be a dask array to save in parallel" in str(
+        excinfo.value
+    )
+
+
+def test_movie_save_parallel_wrong_chunk(tmpdir):
+    path = tmpdir.join("movie.mp4")
+    da = test_dataarray().chunk({"time": 2})
+    mov = Movie(da)
+    with pytest.raises(ValueError) as excinfo:
+        mov.save(
+            path.strpath,
+            parallel=True,
+        )
+    assert "Input data needs to be a with single chunks along" in str(excinfo.value)
 
 
 def test_plotfunc_kwargs(tmpdir):

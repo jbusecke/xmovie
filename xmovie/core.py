@@ -34,9 +34,6 @@ import dask.array as dsa
 plt.rcParams.update({"font.size": 14})
 
 
-
-
-
 # Data treatment
 def _parse_plot_defaults(da, kwargs):
     if isinstance(da, xr.DataArray):
@@ -164,9 +161,6 @@ def _combine_ffmpeg_command(
 #     return p
 
 
-
-
-
 def convert_gif(
     mpath,
     gpath="movie.gif",
@@ -199,9 +193,6 @@ def convert_gif(
         if os.path.exists(mpath):
             os.remove(mpath)
     return p
-
-
-
 
 
 def combine_frames_into_movie(
@@ -263,7 +254,7 @@ class Movie:
         frame_pattern="frame_%05d.png",
         fieldname=None,
         input_check=True,
-        **kwargs
+        **kwargs,
     ):
         self.pixelwidth = pixelwidth
         self.pixelheight = pixelheight
@@ -325,7 +316,9 @@ class Movie:
         # produce dummy output for ax and pp if the plotfunc does not provide them
         if self.plotfunc_n_outargs == 2:
             # this should be the case for all presets provided by xmovie
-            ax, pp = self.plotfunc(self.data, fig, timestep, self.framedim, **self.kwargs)
+            ax, pp = self.plotfunc(
+                self.data, fig, timestep, self.framedim, **self.kwargs
+            )
         else:
             warnings.warn(
                 "The provided `plotfunc` does not provide the expected number of output arguments.\
@@ -349,8 +342,6 @@ class Movie:
             {"figure.dpi": self.dpi, "figure.figsize": [self.width, self.height]}
         ):
             fig, ax, pp = self.render_single_frame(timestep)
-
-
 
     def save_frames_serial(self, odir, progress=False):
         """Save movie frames as picture files.
@@ -376,11 +367,8 @@ class Movie:
                 fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
             )
 
-
-
-    def save_frames_parallel(self, odir,
-                             parallel_compute_kwargs=dict()):
-        '''
+    def save_frames_parallel(self, odir, parallel_compute_kwargs=dict()):
+        """
         Saves all frames in parallel using dask.map_blocks.
 
         Parameters
@@ -390,36 +378,47 @@ class Movie:
         parallel_compute_kwargs : dict
             Keyword arguments to pass t dask's `compute()` function.
 
-        '''
+        """
         import numpy as np
         import dask.array as darray
 
         da = self.data
         framedim = self.framedim
-        
-        da = da.chunk({self.framedim : 1}) # DataArray needs to have length-1 chunks in framedim
-        chunk_dims = [ dim for dim in da.dims if dim != framedim ] # Create dimensions for each chunk
-               
+
+        # Ensure that `da` has single chunks along `framedim`. Otherwise this might result in unexpected output.
+        framedim_chunks = da.chunks
+        if framedim_chunks is None:
+            raise ValueError(
+                f"Input data needs to be a dask array to save in parallel. Please chunk the input with single chunks along {framedim}."
+            )
+        framedim_chunks = framedim_chunks[da.dims.index(framedim)]
+
+        if not all([chunk == 1 for chunk in framedim_chunks]):
+            raise ValueError(
+                f"Input data needs to be a with single chunks along {framedim}. Got these chunks instead ({framedim_chunks})"
+            )
 
         total_time = da[framedim]
+
         def _save_single_frame_parallel(xr_array, framedim):
             time_of_chunk = xr_array[framedim]
-            timestep = abs(total_time - time_of_chunk[0]).argmin().item() # get index of chunk in framedim
+            timestep = (
+                abs(total_time - time_of_chunk[0]).argmin().item()
+            )  # get index of chunk in framedim
 
             fig, ax, pp = self.render_single_frame(timestep)
-            save_single_frame(fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi)
+            save_single_frame(
+                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
+            )
 
             return time_of_chunk
 
-        da.map_blocks(func=_save_single_frame_parallel,
-                      args=(framedim,),
-                      template=xr.ones_like(da[framedim]).chunk({framedim:1}),
-                      ).compute(**parallel_compute_kwargs)
-        return 
-    
-
-
-
+        da.map_blocks(
+            func=_save_single_frame_parallel,
+            args=(framedim,),
+            template=xr.ones_like(da[framedim]).chunk({framedim: 1}),
+        ).compute(**parallel_compute_kwargs)
+        return
 
     def save(
         self,
@@ -516,8 +515,9 @@ class Movie:
 
         # print frames
         if parallel:
-            self.save_frames_parallel(dirname,
-                                      parallel_compute_kwargs=parallel_compute_kwargs)
+            self.save_frames_parallel(
+                dirname, parallel_compute_kwargs=parallel_compute_kwargs
+            )
         else:
             self.save_frames_serial(dirname, progress=progress)
 
@@ -545,5 +545,3 @@ class Movie:
                 remove_movie=remove_movie,
                 gif_framerate=gif_framerate,
             )
-
-

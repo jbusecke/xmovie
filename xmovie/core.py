@@ -378,7 +378,7 @@ class Movie:
 
 
 
-    def save_frames_parallel(self, odir, progress=False, 
+    def save_frames_parallel(self, odir,
                              parallel_compute_kwargs=dict()):
         '''
         Saves all frames in parallel using dask.map_blocks.
@@ -387,8 +387,6 @@ class Movie:
         ----------
         odir : path
             path to output directory
-        progress : Bool
-            Whether or not to show a progress bar.
         parallel_compute_kwargs : dict
             Keyword arguments to pass t dask's `compute()` function.
 
@@ -417,13 +415,7 @@ class Movie:
                                                      args=(framedim,),
                                                      template=xr.ones_like(da[framedim]).chunk({framedim:1}),
                                                      )
-        if progress:
-            from dask.diagnostics import ProgressBar
-            with ProgressBar():
-                mapped_save_and_close_frames.compute(**parallel_compute_kwargs)
-        else:
-            mapped_save_and_close_frames.compute(**parallel_compute_kwargs)
-
+        mapped_save_and_close_frames.compute(**parallel_compute_kwargs)
         return 
     
 
@@ -461,7 +453,8 @@ class Movie:
             is given as `.gif` (the default is True).
         progress : Bool
             Experimental switch to show progress output. This will be refined
-            in future version (the default is False).
+            in future version and currently only works with `parallel=False`
+            (the default value is False).
         verbose : Bool
             Experimental switch to show output of ffmpeg commands. Useful for
             debugging but can quickly flood your notebook
@@ -524,7 +517,7 @@ class Movie:
 
         # print frames
         if parallel:
-            self.save_frames_parallel(dirname, progress=progress,
+            self.save_frames_parallel(dirname,
                                       parallel_compute_kwargs=parallel_compute_kwargs)
         else:
             self.save_frames_serial(dirname, progress=progress)

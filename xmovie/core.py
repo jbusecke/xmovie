@@ -386,12 +386,11 @@ class Movie:
         framedim = self.framedim
 
         # Ensure that `da` has single chunks along `framedim`. Otherwise this might result in unexpected output.
-        framedim_chunks = da.chunks
-        if framedim_chunks is None:
+        if da.chunks is None:
             raise ValueError(
                 f"Input data needs to be a dask array to save in parallel. Please chunk the input with single chunks along {framedim}."
             )
-        framedim_chunks = framedim_chunks[da.dims.index(framedim)]
+        framedim_chunks = da.chunks[da.dims.index(framedim)]
 
         if not all([chunk == 1 for chunk in framedim_chunks]):
             raise ValueError(

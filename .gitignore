@@ -63,4 +63,13 @@ target/
 *.nc
 *.zip
 
-#
+.ipynb_checkpoints
+
+# dask files
+**/dask-worker-space
+
+# movie and picture files
+*.png 
+*.mov 
+*.gif
+

@@ -141,6 +141,20 @@ def _check_ffmpeg_execute(command, verbose=False):
             )
 
 
+def _combine_ffmpeg_command(
+    sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options
+):
+    # we need `-y` because i can not properly diagnose the errors here...
+    command = 'ffmpeg -r %i -i "%s" -y %s -r %i "%s"' % (
+        framerate,
+        os.path.join(sourcefolder, frame_pattern),
+        ffmpeg_options,
+        framerate,
+        os.path.join(sourcefolder, moviename),
+    )
+    return command
+
+
 # def create_gif_palette(mpath, ppath="palette.png", verbose=False):
 #     command = "ffmpeg -y -i %s -vf palettegen %s" % (mpath, ppath)
 #     p = _check_ffmpeg_execute(command, verbose=verbose)
@@ -181,21 +195,7 @@ def convert_gif(
     return p
 
 
-def _combine_ffmpeg_command(
-    sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options
-):
-    # we need `-y` because i can not properly diagnose the errors here...
-    command = 'ffmpeg -r %i -i "%s" -y %s -r %i "%s"' % (
-        framerate,
-        os.path.join(sourcefolder, frame_pattern),
-        ffmpeg_options,
-        framerate,
-        os.path.join(sourcefolder, moviename),
-    )
-    return command
-
-
-def write_movie(
+def combine_frames_into_movie(
     sourcefolder,
     moviename,
     frame_pattern="frame_%05d.png",
@@ -226,7 +226,8 @@ def write_movie(
 #     return fig
 
 
-def frame_save(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100):
+def save_single_frame(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100):
+    """ Saves a single frame of data from an already-created figure and then closes the figure """
     fig.savefig(
         os.path.join(odir, frame_pattern % (frame)),
         dpi=dpi,
@@ -253,7 +254,7 @@ class Movie:
         frame_pattern="frame_%05d.png",
         fieldname=None,
         input_check=True,
-        **kwargs
+        **kwargs,
     ):
         self.pixelwidth = pixelwidth
         self.pixelheight = pixelheight
@@ -296,7 +297,7 @@ class Movie:
             self.plotfunc, self.data, self.framedim, **self.kwargs
         )
 
-    def render_frame(self, timestep):
+    def render_single_frame(self, timestep):
         """renders complete figure (frame) for given timestep.
 
         Parameters
@@ -315,7 +316,9 @@ class Movie:
         # produce dummy output for ax and pp if the plotfunc does not provide them
         if self.plotfunc_n_outargs == 2:
             # this should be the case for all presets provided by xmovie
-            ax, pp = self.plotfunc(self.data, fig, timestep, self.framedim, **self.kwargs)
+            ax, pp = self.plotfunc(
+                self.data, fig, timestep, self.framedim, **self.kwargs
+            )
         else:
             warnings.warn(
                 "The provided `plotfunc` does not provide the expected number of output arguments.\
@@ -338,9 +341,9 @@ class Movie:
         with plt.rc_context(
             {"figure.dpi": self.dpi, "figure.figsize": [self.width, self.height]}
         ):
-            fig, ax, pp = self.render_frame(timestep)
+            fig, ax, pp = self.render_single_frame(timestep)
 
-    def save_frames(self, odir, progress=False):
+    def save_frames_serial(self, odir, progress=False):
         """Save movie frames as picture files.
 
         Parameters
@@ -348,7 +351,7 @@ class Movie:
         odir : path
             path to output directory
         progress : type
-            Show progress bar. Requires
+            Show progress bar. Requires tqdm.
 
         """
         # create range of frames
@@ -358,11 +361,63 @@ class Movie:
         elif ~tqdm_avail and progress:
             warnings.warn("Cant show progess bar at this point. Install tqdm")
 
-        for fi in frame_range:
-            fig, ax, pp = self.render_frame(fi)
-            frame_save(
-                fig, fi, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
+        for timestep in frame_range:
+            fig, ax, pp = self.render_single_frame(timestep)
+            save_single_frame(
+                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
             )
+
+    def save_frames_parallel(self, odir, parallel_compute_kwargs=dict()):
+        """
+        Saves all frames in parallel using dask.map_blocks.
+
+        Parameters
+        ----------
+        odir : path
+            path to output directory
+        parallel_compute_kwargs : dict
+            Keyword arguments to pass t dask's `compute()` function.
+
+        """
+        import numpy as np
+        import dask.array as darray
+
+        da = self.data
+        framedim = self.framedim
+
+        # Ensure that `da` has single chunks along `framedim`. Otherwise this might result in unexpected output.
+        if da.chunks is None:
+            raise ValueError(
+                f"Input data needs to be a dask array to save in parallel. Please chunk the input with single chunks along {framedim}."
+            )
+        framedim_chunks = da.chunks[da.dims.index(framedim)]
+
+        if not all([chunk == 1 for chunk in framedim_chunks]):
+            raise ValueError(
+                f"Input data needs to be a with single chunks along {framedim}. Got these chunks instead ({framedim_chunks})"
+            )
+
+        total_time = da[framedim]
+
+        def _save_single_frame_parallel(xr_array, framedim):
+            time_of_chunk = xr_array[framedim]
+            timestep = (
+                abs(total_time - time_of_chunk[0]).argmin().item()
+            )  # get index of chunk in framedim
+
+            fig, ax, pp = self.render_single_frame(timestep)
+            save_single_frame(
+                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
+            )
+
+            return time_of_chunk
+
+        da.map_blocks(
+            func=_save_single_frame_parallel,
+            args=(framedim,),
+            template=xr.ones_like(da[framedim]).chunk({framedim: 1}),
+        ).compute(**parallel_compute_kwargs)
+        return
 
     def save(
         self,
@@ -372,6 +427,8 @@ class Movie:
         progress=False,
         verbose=False,
         overwrite_existing=False,
+        parallel=False,
+        parallel_compute_kwargs=dict(),
         framerate=15,
         ffmpeg_options="-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p",
         gif_palette=False,
@@ -393,7 +450,8 @@ class Movie:
             is given as `.gif` (the default is True).
         progress : Bool
             Experimental switch to show progress output. This will be refined
-            in future version (the default is False).
+            in future version and currently only works with `parallel=False`
+            (the default value is False).
         verbose : Bool
             Experimental switch to show output of ffmpeg commands. Useful for
             debugging but can quickly flood your notebook
@@ -401,6 +459,10 @@ class Movie:
         overwrite_existing : Bool
             Set to overwrite existing files with `filename`
             (the default is False).
+        parallel : Bool
+            Whether or not to use dask to save the frames in parallel.
+        parallel_compute_kwargs : dict
+            Keyword arguments to pass to dask's `compute()` function.
         framerate : int
             Frames per second for the output movie file. Only relevant for '.mp4' files.
             (the default is 15)
@@ -451,10 +513,15 @@ class Movie:
                     )
 
         # print frames
-        self.save_frames(dirname, progress=progress)
+        if parallel:
+            self.save_frames_parallel(
+                dirname, parallel_compute_kwargs=parallel_compute_kwargs
+            )
+        else:
+            self.save_frames_serial(dirname, progress=progress)
 
         # Create movie
-        write_movie(
+        combine_frames_into_movie(
             dirname,
             moviefile,
             frame_pattern=self.frame_pattern,
@@ -477,46 +544,3 @@ class Movie:
                 remove_movie=remove_movie,
                 gif_framerate=gif_framerate,
             )
-
-    # def save_parallel(
-    #     self, odir, da, plotfunc, framedim, partition_size=5, func_kwargs={}
-    # ):
-    #     """Save movie frames out to file.
-    #
-    #     Parameters
-    #     ----------
-    #     odir : path
-    #         path to output directory
-    #     da : xr.Dataset/xr.DataArray
-    #         Input xarray object.
-    #     plotfunc : func
-    #         plotting function.
-    #     framedim : type
-    #         Dimension of `da` which represents the frames (e.g. time).
-    #     partition_size : type
-    #         Size of dask bags to be computed in parallel (the default is 20).
-    #     func_kwargs : dict
-    #         optional arguments passed to func (the default is {}).
-    #
-    #     Returns
-    #     -------
-    #     type
-    #         Description of returned object.
-    #
-    #     """
-    #     if isinstance(da, xr.DataArray):
-    #         dummy_data = da
-    #     elif isinstance(da, xr.Dataset):
-    #         dummy_data = da[list(da.data_vars)[0]]
-    #     else:
-    #         raise ValueError("Input has to be xarray object. Is %s" % type(da))
-    #
-    #     frames = range(len(dummy_data[framedim].data))
-    #     frame_bag = db.from_sequence(frames, partition_size=partition_size)
-    #     frame_bag.map(
-    #         self.frame_save,
-    #         odir=odir,
-    #         da=da,
-    #         plotfunc=plotfunc,
-    #         func_kwargs=func_kwargs,
-    #     ).compute(processes=False)

@@ -4,8 +4,8 @@ from xmovie.core import (
     _combine_ffmpeg_command,
     _execute_command,
     _check_ffmpeg_execute,
-    frame_save,
-    write_movie,
+    save_single_frame,
+    combine_frames_into_movie,
     convert_gif,
     Movie,
 )
@@ -46,7 +46,7 @@ def test_parse_plot_defaults():
 def dummy_plotfunc(da, fig, timestep, framedim, **kwargs):
     # a very simple plotfunc, which might be passed by the user
     ax = fig.subplots()
-    da.isel({framedim:timestep}).plot(ax=ax)
+    da.isel({framedim: timestep}).plot(ax=ax)
 
 
 def test_check_plotfunc_output():
@@ -65,7 +65,7 @@ def test_frame_save(tmpdir, frame, frame_pattern, dpi, w, h):
     # Create Figure
     # fig = plt.figure()
     fig = plt.figure(figsize=[w / dpi, h / dpi])
-    frame_save(fig, frame, odir=tmpdir, frame_pattern=frame_pattern, dpi=dpi)
+    save_single_frame(fig, frame, odir=tmpdir, frame_pattern=frame_pattern, dpi=dpi)
     filename = tmpdir.join(frame_pattern % frame)
     img = Image.open(filename.strpath)
     pixel_w, pixel_h = img.size
@@ -152,9 +152,9 @@ def test_write_movie(tmpdir, moviename, remove_frames, framerate, ffmpeg_options
     m = tmpdir.join(moviename)
     da = test_dataarray()
     mov = Movie(da)
-    mov.save_frames(tmpdir)
+    mov.save_frames_serial(tmpdir)
     filenames = [tmpdir.join(frame_pattern % ff) for ff in range(len(da.time))]
-    write_movie(
+    combine_frames_into_movie(
         tmpdir,
         moviename,
         remove_frames=remove_frames,
@@ -189,9 +189,9 @@ def test_convert_gif(
 
     da = test_dataarray()
     mov = Movie(da)
-    mov.save_frames(tmpdir)
+    mov.save_frames_serial(tmpdir)
 
-    write_movie(tmpdir, moviename)
+    combine_frames_into_movie(tmpdir, moviename)
 
     convert_gif(
         mpath,
@@ -234,15 +234,17 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
     )
 
     # if not time, hide it to test changing default
-    if framedim!="time":
-        da=da.rename({"time":"something_else"})
+    if framedim != "time":
+        da = da.rename({"time": "something_else"})
     mov = Movie(da, **kwargs)
 
     if plotfunc is None:
         assert mov.plotfunc == basic
     else:
         assert mov.plotfunc == plotfunc
-    assert mov.plotfunc_n_outargs == _check_plotfunc_output(mov.plotfunc, mov.data, framedim)
+    assert mov.plotfunc_n_outargs == _check_plotfunc_output(
+        mov.plotfunc, mov.data, framedim
+    )
 
     assert mov.dpi == dpi
     assert mov.framedim == framedim
@@ -275,13 +277,13 @@ def test_movie_render_frame(plotfunc, expected_empty):
 
     if expected_empty:
         with pytest.warns(UserWarning):
-            fig, ax, pp = mov.render_frame(1)
+            fig, ax, pp = mov.render_single_frame(1)
             assert ax is None
             assert pp is None
             assert isinstance(fig, mpl.figure.Figure)
 
     else:
-        fig, ax, pp = mov.render_frame(1)
+        fig, ax, pp = mov.render_single_frame(1)
         assert isinstance(
             ax, mpl.axes.Axes
         )  # this needs to be tested for the projections aswell
@@ -302,11 +304,12 @@ def test_movie_preview():
 def test_movie_save_frames(tmpdir, frame_pattern):
     da = test_dataarray()
     mov = Movie(da, frame_pattern=frame_pattern)
-    mov.save_frames(tmpdir)
+    mov.save_frames_serial(tmpdir)
     filenames = [tmpdir.join(frame_pattern % ff) for ff in range(len(da.time))]
     assert all([fn.exists() for fn in filenames])
 
 
+@pytest.mark.parametrize("parallel", [True, False])
 @pytest.mark.parametrize("filename", ["movie.mp4", "movie.gif"])
 @pytest.mark.parametrize("gif_palette", [True, False])
 @pytest.mark.parametrize("framerate, gif_framerate", [(10, 8), (24, 15), (7, 4)])
@@ -318,12 +321,14 @@ def test_movie_save_frames(tmpdir, frame_pattern):
     ],
 )
 def test_movie_save(
-    tmpdir, filename, gif_palette, framerate, gif_framerate, ffmpeg_options
+    tmpdir, parallel, filename, gif_palette, framerate, gif_framerate, ffmpeg_options
 ):
     print(gif_palette)
     # Need more tests for progress, verbose, overwriting
     path = tmpdir.join(filename)
     da = test_dataarray()
+    if parallel:
+        da = da.chunk({"time": 1})
     mov = Movie(da)
     mov.save(
         path.strpath,
@@ -331,6 +336,7 @@ def test_movie_save(
         framerate=framerate,
         gif_framerate=gif_framerate,
         ffmpeg_options=ffmpeg_options,
+        parallel=parallel,
     )
 
     assert path.exists()
@@ -350,6 +356,33 @@ def test_movie_save(
         mov.save(path.strpath, overwrite_existing=False)
 
 
+def test_movie_save_parallel_no_dask(tmpdir):
+    path = tmpdir.join("movie.mp4")
+    da = test_dataarray()
+    mov = Movie(da)
+    with pytest.raises(ValueError) as excinfo:
+        mov.save(
+            path.strpath,
+            parallel=True,
+        )
+
+    assert "Input data needs to be a dask array to save in parallel" in str(
+        excinfo.value
+    )
+
+
+def test_movie_save_parallel_wrong_chunk(tmpdir):
+    path = tmpdir.join("movie.mp4")
+    da = test_dataarray().chunk({"time": 2})
+    mov = Movie(da)
+    with pytest.raises(ValueError) as excinfo:
+        mov.save(
+            path.strpath,
+            parallel=True,
+        )
+    assert "Input data needs to be a with single chunks along" in str(excinfo.value)
+
+
 def test_plotfunc_kwargs(tmpdir):
     """Test if kwargs are properly
     propagated to the  plotfunction"""
@@ -361,7 +394,7 @@ def test_plotfunc_kwargs(tmpdir):
     da = test_dataarray()
     mov = Movie(da, plotfunc=plotfunc, test1=3)
     mov.preview(0)
-    mov.save_frames(tmpdir)
+    mov.save_frames_serial(tmpdir)
 
 
 def test_plotfunc_kwargs_xfail(tmpdir):
@@ -377,4 +410,4 @@ def test_plotfunc_kwargs_xfail(tmpdir):
     da = test_dataarray()
     mov = Movie(da, plotfunc=plotfunc, test1=3)
     mov.preview(0)
-    mov.save_frames(tmpdir)
+    mov.save_frames_serial(tmpdir)

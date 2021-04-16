@@ -4,6 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![DOI](https://zenodo.org/badge/124968397.svg)](https://zenodo.org/badge/latestdoi/124968397)
 [![pypi](https://badge.fury.io/py/xmovie.svg)](https://badge.fury.io/py/xmovie)
+[![conda-forge](https://img.shields.io/conda/dn/conda-forge/xmovie?label=conda-forge)](https://anaconda.org/conda-forge/xmovie)
 
 A simple way of creating beautiful movies from [xarray](https://github.com/pydata/xarray) objects.
 

@@ -1,0 +1,20 @@
+name: test_env_xmovie
+channels:
+  - conda-forge
+dependencies:
+  - python=3.7
+  - xarray
+  - dask
+  - scipy
+  - numpy
+  - pytest
+  - future
+  - matplotlib
+  - cartopy
+  - pykdtree
+  - ffmpeg
+  - tqdm
+  - opencv
+  - pip:
+    - codecov
+    - pytest-cov

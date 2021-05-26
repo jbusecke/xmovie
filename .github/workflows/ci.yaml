@@ -81,7 +81,7 @@ jobs:
           activate-environment: test_env_xmovie # Defined in ci/environment*.yml
           auto-update-conda: false
           python-version: 3.9
-          environment-file: ci/environment-core-deps.yml.yml
+          environment-file: ci/environment-core-deps.yml
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
       - name: Set up conda environment
         run: |

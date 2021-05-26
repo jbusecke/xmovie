@@ -55,3 +55,46 @@ jobs:
           env_vars: OS,PYTHON
           name: codecov-umbrella
           fail_ci_if_error: false
+
+  core-deps-dev:
+    name: Build (core-dependencies)
+    if: github.repository == 'jbusecke/xmovie'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash -l {0}
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache conda
+        uses: actions/cache@v1
+        env:
+          # Increase this value to reset cache if ci/environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('ci/environment-core-deps.yml') }}
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: test_env_xmovie # Defined in ci/environment*.yml
+          auto-update-conda: false
+          python-version: 3.9
+          environment-file: ci/environment-core-deps.yml.yml
+          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+      - name: Set up conda environment
+        run: |
+          python -m pip install -e . --no-deps
+          conda list
+      - name: Run Tests
+        run: |
+          pytest --cov=./ --cov-report=xml
+      - name: Upload code coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          env_vars: OS,PYTHON
+          name: codecov-umbrella
+          fail_ci_if_error: false

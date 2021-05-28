@@ -61,7 +61,7 @@ jobs:
           ls -ltrh
           ls -ltrh dist
       - name: Publish package to TestPyPI
-        if: github.event_name == 'push'
+        if: github.event_name == 'pull_request'
         uses: pypa/gh-action-pypi-publish@v1.4.2
         with:
           user: __token__
@@ -70,7 +70,7 @@ jobs:
           verbose: true
 
       - name: Check uploaded package
-        if: github.event_name == 'push'
+        if: github.event_name == 'pull_request'
         run: |
           sleep 3
           python -m pip install --upgrade pip

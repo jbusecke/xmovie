@@ -2,7 +2,6 @@ name: test_env_xmovie
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
   - xarray
   - dask
   - scipy
@@ -12,8 +11,6 @@ dependencies:
   - matplotlib
   - cartopy
   - pykdtree
-  - ffmpeg
-  - tqdm
   - opencv
   - pip:
     - codecov

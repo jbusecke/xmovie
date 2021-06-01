@@ -3,9 +3,9 @@ on:
   release:
     types:
       - published
-  pull_request:
-    branches:
-      - "*"
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   build-artifacts:

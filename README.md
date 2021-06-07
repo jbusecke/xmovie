@@ -15,7 +15,7 @@ Not only is a beautiful movie a fantastic way to wake up the crowd on a Friday
 afternoon of a weeklong conference, but it can also speed up the discovery
 process, since our eyes are amazing image processing devices.
 
-This module aims to facilitate movie rendering from data object based on
+This module aims to facilitate movie rendering from data objects based on
 [xarray](https://github.com/pydata/xarray) objects.
 
 Xarray already provides a way to create quick and beautiful static images from your data.

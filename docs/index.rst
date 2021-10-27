@@ -10,6 +10,8 @@ Welcome to xmovie's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   api
+   whats-new
 
 
 Indices and tables

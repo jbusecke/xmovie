@@ -216,6 +216,8 @@ def _add_coast(ax, style):
 def basic(
     da, fig, timestamp, framedim="time", plotmethod=None, plot_variable=None, subplot_kw=None, **kwargs
 ):
+    """Basic plot using the default xarray plot method for this DataArray."""
+
     # create axis
     ax = fig.subplots(subplot_kw=subplot_kw)
     data = _check_input(da, plot_variable)
@@ -242,6 +244,14 @@ def rotating_globe(
     debug=False,
     **kwargs
 ):
+    """
+    Rotating globe plot.
+
+    Parameters
+    ----------
+    da
+        Xarray DataArray to be plotted.
+    """
 
     # rotate lon_rotations times throughout movie and start at lon_start
     lon = np.linspace(0, 360 * lon_rotations, len(da[framedim])) + lon_start

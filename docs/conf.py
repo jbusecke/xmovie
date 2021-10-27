@@ -47,6 +47,9 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.extlinks',
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.autosectionlabel",
     # 'sphinx.ext.doctest',
     # 'sphinx.ext.coverage',
     # 'sphinx.ext.mathjax',
@@ -83,11 +86,35 @@ pygments_style = 'sphinx'
 
 # -- Extension configuration -------------------------------------------------
 
-autoclass_content = "both"
+autodoc_typehints = "description"
+autodoc_default_options ={
+    "members": True,
+}
+
+autosectionlabel_prefix_document = True
 
 extlinks = {
     "issue": ("https://github.com/jbusecke/xmovie/issues/%s", "GH#"),
     "pull": ("https://github.com/jbusecke/xmovie/pull/%s", "PR#"),
+}
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "xarray": ("https://xarray.pydata.org/en/stable/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "dask": ("https://docs.dask.org/en/latest", None),
+}
+
+napoleon_numpy_docstring = True
+napoleon_preprocess_types = True
+napoleon_use_param = False
+napoleon_use_rtype = False
+
+napoleon_type_aliases = {
+    "DataArray": "~xarray.DataArray",
+    "Figure": "~matplotlib.figure.Figure",
+    "Axes": "~matplotlib.axes.Axes",
+    "Callable": "~typing.Callable",
 }
 
 

@@ -249,8 +249,40 @@ def rotating_globe(
 
     Parameters
     ----------
-    da
-        Xarray DataArray to be plotted.
+    da : DataArray
+        Data to be plotted.
+    fig : Figure
+        Figure to plot on.
+    timestamp : int
+        Used to select the animation frame using :meth:`~xarray.DataArray.isel`
+        with dimension `framedim`.
+    framedim : str
+        Dimension name along which frames will be generated.
+    plotmethod : str, optional
+        Method of :attr:`xarray.DataArray.plot` to use.
+    plot_variable : str, optional
+        Variable to plot. Not needed for :class:`~xarray.DataArray`.
+    overlay_variables
+        Currently unused.
+    lon_start : float
+        Central longitude at the beginning of the animation.
+    lon_rotations : float
+        Number of longitude rotations to be completed in the animation.
+    lat_start : float
+        As in `lon_start`.
+    lat_rotations : float
+        As in `lon_rotations`.
+    land : bool
+        Plot the land.
+    gridlines : bool
+        Plot lat/lon gridlines.
+    coastline : bool
+        Plot the coastlines.
+    style : {'standard', 'dark'}
+    debug : bool
+        Currently unused.
+    **kwargs
+        Passed on to the xarray plotting method.
     """
 
     # rotate lon_rotations times throughout movie and start at lon_start

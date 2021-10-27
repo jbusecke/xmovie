@@ -1,4 +1,4 @@
-xmovie.Movie
+﻿xmovie.Movie
 ============
 
 .. currentmodule:: xmovie

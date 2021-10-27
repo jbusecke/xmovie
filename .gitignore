@@ -72,6 +72,8 @@ target/
 
 # movie and picture files
 *.png 
-*.mov 
+*.mov
+*.mp4 
 *.gif
+!docs/examples/*.gif
 

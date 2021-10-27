@@ -12,6 +12,7 @@ Welcome to xmovie's documentation!
 
    api
    whats-new
+   examples
 
 
 Indices and tables

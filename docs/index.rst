@@ -10,14 +10,12 @@ Welcome to xmovie's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   examples
    api
    whats-new
-   examples
 
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

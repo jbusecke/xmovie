@@ -76,4 +76,4 @@ target/
 *.mp4 
 *.gif
 !docs/examples/*.gif
-
+!docs/examples/*.png

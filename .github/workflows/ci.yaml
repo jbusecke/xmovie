@@ -68,7 +68,7 @@ jobs:
   core-deps-dev:
     name: Build (core-dependencies)
     if: github.repository == 'jbusecke/xmovie'
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
       run:

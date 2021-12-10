@@ -3,19 +3,24 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to xmovie's documentation!
-==================================
+xmovie: movies from `xarray`_ objects
+=====================================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: For users
+   :hidden:
 
    examples
    api
    whats-new
+   GitHub repository <https://github.com/jbusecke/xmovie>
 
 
-Indices and tables
-==================
+.. figure:: examples/movie_rotating.gif
 
-* :ref:`genindex`
+   Rotating globe :ref:`preset <api:Presets>` example.
+   See :ref:`the quickstart <examples/quickstart:modifying plots>`.
+
+
+.. _xarray: https://xarray.pydata.org

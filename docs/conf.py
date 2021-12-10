@@ -24,7 +24,7 @@ import xmovie
 
 current_year = datetime.datetime.now().year
 project = 'xmovie'
-copyright = f'2018\u2013{current_year}, Julius Busecke'
+copyright = f'2018\u2013{current_year}, xmovie maintainers'
 author = 'Julius Busecke'
 
 # The short X.Y version
@@ -92,6 +92,7 @@ autodoc_default_options ={
 }
 
 autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth = 2
 
 extlinks = {
     "issue": ("https://github.com/jbusecke/xmovie/issues/%s", "GH#"),

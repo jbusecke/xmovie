@@ -1,10 +1,11 @@
+.. currentmodule:: xmovie
+
 API Reference
 =============
 
 :class:`~xmovie.Movie` class
 ----------------------------
 
-.. currentmodule:: xmovie
 
 .. autosummary::
    :toctree: api/
@@ -29,5 +30,3 @@ They have a signature of the type:
 
    rotating_globe
    ~xmovie.presets.basic
-
-

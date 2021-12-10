@@ -1,0 +1,8 @@
+version: 2
+
+conda:
+  environment: ci/environment-docs.yml
+
+sphinx:
+  configuration: docs/conf.py
+  fail_on_warning: true

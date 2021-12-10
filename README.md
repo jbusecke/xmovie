@@ -6,7 +6,7 @@
 [![pypi](https://badge.fury.io/py/xmovie.svg)](https://badge.fury.io/py/xmovie)
 [![conda-forge](https://img.shields.io/conda/dn/conda-forge/xmovie?label=conda-forge)](https://anaconda.org/conda-forge/xmovie)
 
-*A simple way of creating beautiful movies from [xarray](https://github.com/pydata/xarray) objects.*
+*A simple way of creating beautiful movies from [xarray](https://xarray.pydata.org) objects.*
 
 With ever-increasing detail, modern scientific observations and model results
 lend themselves to visualization in the form of movies.
@@ -31,39 +31,21 @@ The main aims of this module are:
   objects with preset plot functions -- create a movie with only 2 lines of code.
 - Provide high quality, customizable presets to create stunning visualizations with minimal setup.
 - Convert your static plot workflow to a movie with only a few lines of code,
-  while maintaining all the flexibility of [xarray](https://github.com/pydata/xarray)
-  and [Matplotlib](https://matplotlib.org/).
-- Optionally, use [Dask](https://github.com/dask/dask) for parallelized frame rendering.
+  while maintaining all the flexibility of [xarray](https://xarray.pydata.org)
+  and [Matplotlib](https://matplotlib.org).
+- Optionally, use [Dask](https://dask.org) for parallelized frame rendering.
 
 ## Installation
-
-### Conda
 
 The easiest way to install `xmovie` is via `conda`:
 ```
 conda install -c conda-forge xmovie
 ```
 
-### Pip
-
 You can also install via `pip`:
 ```
 pip install xmovie
 ```
-
-### Latest
-
-If you want to install the latest version from GitHub, simply run
-```
-pip install git+https://github.com/jbusecke/xmovie.git
-```
-
-> If you dont have [ssh keys](https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account)
-> set up, you can use
-> ```
-> git clone https://github.com/jbusecke/xmovie.git`
-> ```
-> and enter your github password.
 
 ## Documentation
 

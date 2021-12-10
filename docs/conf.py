@@ -53,6 +53,8 @@ extensions = [
     # 'sphinx.ext.doctest',
     # 'sphinx.ext.coverage',
     # 'sphinx.ext.mathjax',
+    "sphinx-prompt",
+    "sphinx_copybutton",
     "nbsphinx",
 ]
 

@@ -21,7 +21,9 @@ dependencies:
   - sphinx-autobuild
   - sphinx-book-theme
   - nbsphinx
+  - sphinx-copybutton
   #
   - pip
   - pip:
+    - sphinx-prompt
     - '-e ../'  # xmovie

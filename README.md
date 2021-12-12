@@ -1,10 +1,11 @@
 # xmovie
 [![Build Status](https://img.shields.io/github/workflow/status/jbusecke/xmovie/CI?logo=github)](https://github.com/jbusecke/xmovie/actions)
-[![codecov](https://codecov.io/gh/jbusecke/xmovie/branch/master/graph/badge.svg)](https://codecov.io/gh/jbusecke/xmovie)
+[![codecov %](https://codecov.io/gh/jbusecke/xmovie/branch/master/graph/badge.svg)](https://codecov.io/gh/jbusecke/xmovie)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![DOI](https://zenodo.org/badge/124968397.svg)](https://zenodo.org/badge/latestdoi/124968397)
-[![pypi](https://badge.fury.io/py/xmovie.svg)](https://badge.fury.io/py/xmovie)
-[![conda-forge](https://img.shields.io/conda/dn/conda-forge/xmovie?label=conda-forge)](https://anaconda.org/conda-forge/xmovie)
+[![PyPI package version](https://badge.fury.io/py/xmovie.svg)](https://badge.fury.io/py/xmovie)
+[![conda-forge package version](https://img.shields.io/conda/vn/conda-forge/xmovie)](https://anaconda.org/conda-forge/xmovie)
+[![conda-forge download count](https://img.shields.io/conda/dn/conda-forge/xmovie?label=conda-forge)](https://anaconda.org/conda-forge/xmovie)
 
 *A simple way of creating beautiful movies from [xarray](https://xarray.pydata.org) objects.*
 

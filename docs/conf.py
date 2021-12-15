@@ -1,10 +1,13 @@
-# -*- coding: utf-8 -*-
-#
 # Configuration file for the Sphinx documentation builder.
 #
 # This file does only contain a selection of the most common options. For a
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/stable/config
+
+import datetime
+
+import xmovie
+
 
 # -- Path setup --------------------------------------------------------------
 
@@ -15,19 +18,20 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-import sphinx_bootstrap_theme
 
 
 # -- Project information -----------------------------------------------------
 
+current_year = datetime.datetime.now().year
 project = 'xmovie'
-copyright = '2018, Julius Busecke'
+copyright = f'2018\u2013{current_year}, xmovie maintainers'
 author = 'Julius Busecke'
 
 # The short X.Y version
-version = ''
+version = ".".join(xmovie.__version__.split(".")[:2])
 # The full version, including alpha/beta/rc tags
-release = ''
+release = xmovie.__version__
+
 
 
 # -- General configuration ---------------------------------------------------
@@ -41,9 +45,17 @@ release = ''
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.extlinks',
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.autosectionlabel",
+    # 'sphinx.ext.doctest',
+    # 'sphinx.ext.coverage',
+    # 'sphinx.ext.mathjax',
+    "sphinx-prompt",
+    "sphinx_copybutton",
+    "nbsphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -74,91 +86,41 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 pygments_style = 'sphinx'
 
 
-# -- Options for HTML output -------------------------------------------------
+# -- Extension configuration -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = 'bootstrap'
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
-
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-#
-# html_theme_options = {}
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
-
-# Custom sidebar templates, must be a dictionary that maps document names
-# to template names.
-#
-# The default sidebars (for documents that don't match any pattern) are
-# defined by theme itself.  Builtin themes are using these templates by
-# default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
-# 'searchbox.html']``.
-#
-# html_sidebars = {}
-
-
-# -- Options for HTMLHelp output ---------------------------------------------
-
-# Output file base name for HTML help builder.
-htmlhelp_basename = 'xmoviedoc'
-
-
-# -- Options for LaTeX output ------------------------------------------------
-
-latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
-
-    # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
-
-    # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
-
-    # Latex figure (float) alignment
-    #
-    # 'figure_align': 'htbp',
+autodoc_typehints = "description"
+autodoc_default_options ={
+    "members": True,
 }
 
-# Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title,
-#  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, 'xmovie.tex', 'xmovie Documentation',
-     'Julius Busecke', 'manual'),
-]
+autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth = 2
+
+extlinks = {
+    "issue": ("https://github.com/jbusecke/xmovie/issues/%s", "GH#"),
+    "pull": ("https://github.com/jbusecke/xmovie/pull/%s", "PR#"),
+}
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "xarray": ("https://xarray.pydata.org/en/stable/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "dask": ("https://docs.dask.org/en/latest", None),
+}
+
+napoleon_numpy_docstring = True
+napoleon_preprocess_types = True
+napoleon_use_param = False
+napoleon_use_rtype = False
+
+napoleon_type_aliases = {
+    "DataArray": "~xarray.DataArray",
+    "Figure": "~matplotlib.figure.Figure",
+    "Axes": "~matplotlib.axes.Axes",
+    "Callable": "~typing.Callable",
+}
 
 
-# -- Options for manual page output ------------------------------------------
+# -- Options for HTML output -------------------------------------------------
 
-# One entry per manual page. List of tuples
-# (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'xmovie', 'xmovie Documentation',
-     [author], 1)
-]
-
-
-# -- Options for Texinfo output ----------------------------------------------
-
-# Grouping the document tree into Texinfo files. List of tuples
-# (source start file, target name, title, author,
-#  dir menu entry, description, category)
-texinfo_documents = [
-    (master_doc, 'xmovie', 'xmovie Documentation',
-     author, 'xmovie', 'One line description of project.',
-     'Miscellaneous'),
-]
-
-
-# -- Extension configuration -------------------------------------------------
+html_theme = 'sphinx_book_theme'

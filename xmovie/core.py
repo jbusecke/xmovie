@@ -243,6 +243,8 @@ def save_single_frame(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi
 
 
 class Movie:
+    """Movie class, describing how to construct an animation from associated data."""
+
     def __init__(
         self,
         da,
@@ -256,6 +258,30 @@ class Movie:
         input_check=True,
         **kwargs,
     ):
+        """
+        Parameters
+        ----------
+        da : DataArray
+            Data to be plotted.
+        plotfunc : Callable
+            Function to plot a single frame, with
+            :ref:`the same signature as the presets <api:Presets>`.
+
+            Default: :func:`~xmovie.presets.basic`.
+        framedim : str
+            Dimension name along which frames will be generated.
+        pixelwidth, pixelheight : int
+            Movie size.
+        dpi : int
+            Movie resolution.
+        frame_pattern : str
+            Filename pattern when saving frames.
+        fieldname
+            Currently unused.
+        **kwargs
+            Passed on to `plotfunc`.
+        """
+
         self.pixelwidth = pixelwidth
         self.pixelheight = pixelheight
         self.dpi = dpi
@@ -302,14 +328,15 @@ class Movie:
 
         Parameters
         ----------
-        timestep : type
-            Description of parameter `timestep`.
+        timestep : int
+            Used to select frame in dimension :attr:`.framedim`.
 
         Returns
         -------
-        type
-            Description of returned object.
-
+        fig : Figure
+        ax : Axes
+        pp
+            Matplotlib primitives returned by the plotting function.
         """
         fig = plt.figure(figsize=[self.width, self.height])
         # create_frame(self.pixelwidth, self.pixelheight, self.dpi)
@@ -330,13 +357,12 @@ class Movie:
         return fig, ax, pp
 
     def preview(self, timestep):
-        """Creates preview frame of movie Class.
+        """Create (plot) preview frame of the movie.
 
         Parameters
         ----------
         timestep : int
-            timestep(frame) for preview.
-
+            Timestep (frame) to preview.
         """
         with plt.rc_context(
             {"figure.dpi": self.dpi, "figure.figsize": [self.width, self.height]}
@@ -349,10 +375,9 @@ class Movie:
         Parameters
         ----------
         odir : path
-            path to output directory
-        progress : type
+            Path to the output directory.
+        progress : bool
             Show progress bar. Requires tqdm.
-
         """
         # create range of frames
         frame_range = range(len(self.data[self.framedim].data))
@@ -374,10 +399,9 @@ class Movie:
         Parameters
         ----------
         odir : path
-            path to output directory
+            Path to the output directory.
         parallel_compute_kwargs : dict
-            Keyword arguments to pass t dask's `compute()` function.
-
+            Keyword arguments to pass to Dask's :meth:`~dask.array.Array.compute`.
         """
         import numpy as np
         import dask.array as darray
@@ -441,44 +465,47 @@ class Movie:
         ----------
         filename : str
             Pathname to final movie/animation. Output is dependent on filetype:
-            Creates movie for `*.mp4` and gif for `*.gif`
-        remove_frames : Bool
-            Optional removal of frame pictures (the default is True; False will
+            creates movie for ``*.mp4`` and gif for ``*.gif``.
+        remove_frames : bool
+            Optional removal of frame pictures (the default is ``True``; ``False`` will
             leave all picture files in folder).
-        remove_movie : Bool
+        remove_movie : bool
             As `remove_frames` but for movie file. Only applies when filename
-            is given as `.gif` (the default is True).
-        progress : Bool
+            is given as `.gif` (the default is ``True``).
+        progress : bool
             Experimental switch to show progress output. This will be refined
-            in future version and currently only works with `parallel=False`
-            (the default value is False).
-        verbose : Bool
+            in future version and currently only works with ``parallel=False``
+            (the default value is ``False``).
+        verbose : bool
             Experimental switch to show output of ffmpeg commands. Useful for
             debugging but can quickly flood your notebook
-            (the default is False).
-        overwrite_existing : Bool
+            (the default is ``False``).
+        overwrite_existing : bool
             Set to overwrite existing files with `filename`
-            (the default is False).
-        parallel : Bool
-            Whether or not to use dask to save the frames in parallel.
+            (the default is ``False``).
+        parallel : bool
+            Whether or not to use Dask to save the frames in parallel.
         parallel_compute_kwargs : dict
-            Keyword arguments to pass to dask's `compute()` function.
+            Keyword arguments to pass to Dask's :func:`~dask.compute`.
         framerate : int
-            Frames per second for the output movie file. Only relevant for '.mp4' files.
-            (the default is 15)
+            Frames per second for the output movie file. Only relevant for ``.mp4`` files.
+            (The default is 15).
         ffmpeg_options: str
             Encoding options to pass to ffmpeg call.
-            Defaults to : `"-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p"`
-        gif_palette : Bool
+            Defaults to: ``"-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p"``.
+        gif_palette : bool
             Use a gif colorpalette to improve quality. Can lead to artifacts
-            in very contrasty situations (the default is False).
+            in very contrasty situations (the default is ``False``).
         gif_resolution_factor : float
             Factor used to reduce gif resolution compared to movie.
             Use 1.0 to put out the same resolutions for both products.
             (the default is 0.5).
+
+            .. note::
+               Currently unused
         gif_framerate : int
             As `framerate` but for the gif output file. Only relevant to `.gif` files.
-            (the default is 10)
+            (The default is 10).
         """
 
         # parse out directory and filename

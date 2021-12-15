@@ -1,0 +1,29 @@
+name: xmovie-docs
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.8
+  # Core
+  - xarray
+  - matplotlib
+  - cartopy
+  - ffmpeg
+  # Optional
+  - tqdm
+  - dask-core
+  # Examples
+  - pooch
+  - jupyterlab
+  - ipywidgets
+  # Docs
+  - sphinx>=4.0
+  - sphinx-autobuild
+  - sphinx-book-theme
+  - nbsphinx
+  - sphinx-copybutton
+  #
+  - pip
+  - pip:
+    - sphinx-prompt
+    - '-e ../'  # xmovie

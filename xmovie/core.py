@@ -1,17 +1,17 @@
-import matplotlib as mpl
-
-mpl.use("Agg")
-import re
-import os
-import sys
-import glob
-import warnings
 import gc
+import glob
+import os
+import re
+import sys
+import warnings
+from subprocess import Popen, PIPE, STDOUT
+
+import dask.array as dsa
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import xarray as xr
 
 from .presets import _check_input, basic
-from subprocess import Popen, PIPE, STDOUT
-import matplotlib.pyplot as plt
 
 try:
     from tqdm.auto import tqdm
@@ -19,15 +19,13 @@ try:
     tqdm_avail = True
 except:
     warnings.warn(
-        "Optional dependency `tqdm` not found. This will make progressbars a lot nicer. \
-    Install with `conda install -c conda-forge tqdm`"
+        "Optional dependency `tqdm` not found. "
+        "This will make progressbars a lot nicer. "
+        "Install with `conda install -c conda-forge tqdm`"
     )
     tqdm_avail = False
 
-# import xarray as xr
-# import dask.bag as db
-import dask.array as dsa
-
+mpl.use("Agg")
 
 # is it a good idea to set these here?
 # Needs to be dependent on dpi and videosize

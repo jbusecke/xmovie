@@ -1,13 +1,14 @@
 import warnings
-import numpy as np
-import xarray as xr
-from cartopy.mpl import geoaxes
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
 
-import shapely.geometry as sgeom
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
+import numpy as np
+import xarray as xr
+
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import shapely.geometry as sgeom
+from cartopy.mpl import geoaxes
 
 
 def _check_input(da, fieldname):

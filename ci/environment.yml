@@ -15,10 +15,10 @@ dependencies:
   #
   # Extras
   - cartopy
-  - cftime
-  - nc-time-axis
-  - scipy
-  - tqdm
+  # - cftime
+  # - nc-time-axis
+  # - scipy
+  # - tqdm
   #
   # Test
   - opencv

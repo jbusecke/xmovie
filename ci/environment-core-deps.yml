@@ -11,7 +11,7 @@ dependencies:
   - numpy
   - xarray
   #
-  # - ffmpeg
+  - ffmpeg
   #
   # Tests
   - opencv

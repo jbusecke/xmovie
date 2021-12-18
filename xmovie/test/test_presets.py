@@ -8,7 +8,15 @@ from xmovie.presets import (
 )
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
+
+try:
+    import cartopy.crs as ccrs
+except ImportError:
+    cartopy_avail = False
+else:
+    cartopy_avail = True
+
+
 
 
 def test_check_input():
@@ -42,6 +50,7 @@ def test_core_plot(plotmethod, expected_type, filled):
         assert pp.filled == filled
 
 
+@pytest.mark.skipif(not cartopy_avail, reason="Requires cartopy")
 @pytest.mark.parametrize("lon", [-700, -300, 1, 300, 700])
 @pytest.mark.parametrize("lat", [-200, -90, 0, 90, 180])
 @pytest.mark.parametrize("sat_height", [35785831, 45785831])

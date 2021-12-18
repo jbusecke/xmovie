@@ -1,3 +1,14 @@
+import os
+
+import cv2
+import dask.array as dsa
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+import xarray as xr
+from PIL import Image
+
 from xmovie.core import (
     _parse_plot_defaults,
     _check_plotfunc_output,
@@ -10,15 +21,13 @@ from xmovie.core import (
     Movie,
 )
 from xmovie.presets import basic, rotating_globe
-import pytest
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-from PIL import Image
-import numpy as np
-import xarray as xr
-import os
-import cv2
-import dask.array as dsa
+
+try:
+    import cartopy
+except ImportError:
+    cartopy_avail = False
+else:
+    cartopy_avail = True
 
 
 def test_parse_plot_defaults():
@@ -232,6 +241,8 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
         pixelheight=pixelheight,
         dpi=dpi,
     )
+    if plotfunc is rotating_globe and not cartopy_avail:
+        pytest.skip("`rotating_globe` requires `cartopy`")
 
     # if not time, hide it to test changing default
     if framedim != "time":

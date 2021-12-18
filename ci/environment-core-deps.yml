@@ -1,17 +1,20 @@
-name: test_env_xmovie
+name: xmovie-test-core
 channels:
   - conda-forge
+  - nodefaults
 dependencies:
-  - xarray
+  - python
+  #
+  # xmovie core
   - dask
-  - scipy
-  - numpy
-  - pytest
-  - future
   - matplotlib
-  - cartopy
-  - pykdtree
+  - numpy
+  - xarray
+  #
+  # - ffmpeg
+  #
+  # Tests
   - opencv
-  - pip:
-    - codecov
-    - pytest-cov
+  - pillow
+  - pytest
+  - pytest-cov

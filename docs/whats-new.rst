@@ -3,6 +3,14 @@ What's New
 v0.3.0 (unreleased)
 -------------------
 
+Packaging
+~~~~~~~~~
+- ``cartopy`` (used in the :func:`~xmovie.rotating_globe` preset)
+  and ``dask`` (used for parallel frame saving)
+  are now optional extras instead of package requirements
+  (:pull:`XX`).
+  By `zmoon <https://github.com/zmoon>`_.
+
 Documentation
 ~~~~~~~~~~~~~
 - Sphinx docs build, published to Read the Docs (:pull:`67`).

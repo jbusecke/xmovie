@@ -1,3 +1,4 @@
+# Conda environment for testing xmovie in CI
 name: xmovie-test
 channels:
   - conda-forge
@@ -6,7 +7,7 @@ dependencies:
   - python
   #
   # xmovie core
-  - dask
+  - dask-core
   - matplotlib
   - numpy
   - xarray

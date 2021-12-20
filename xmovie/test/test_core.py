@@ -1,7 +1,6 @@
 import os
 
 import cv2
-import dask.array as dsa
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,6 +28,13 @@ except ImportError:
 else:
     cartopy_avail = True
 
+try:
+    import dask.array as dsa
+except ImportError:
+    dask_array_avail = False
+else:
+    dask_array_avail = True
+
 
 def test_parse_plot_defaults():
     # create dummy array
@@ -40,16 +46,22 @@ def test_parse_plot_defaults():
     # deactivated while bug persists..
     # assert d["cbar_kwargs"] == dict(extend="neither")
     assert d["extend"] == "neither"
-    da = xr.DataArray(np.arange(20), dims=["x"]).chunk({"x": 1})
-    d = _parse_plot_defaults(da, {})
-    assert isinstance(da.data, dsa.Array)
-    assert not isinstance(d["vmin"], dsa.Array)
-    assert not isinstance(d["vmax"], dsa.Array)
+
     with pytest.raises(RuntimeError):
         _parse_plot_defaults(5, {})
+
     for var in ["vmin", "vmax", "test"]:
         expected = _parse_plot_defaults(da, {var: "input"})[var]
         assert expected == "input"
+    
+    if not dask_array_avail:
+        pytest.skip("`dask.array` required")
+    else:
+        da = xr.DataArray(np.arange(20), dims=["x"]).chunk({"x": 1})
+        d = _parse_plot_defaults(da, {})
+        assert isinstance(da.data, dsa.Array)
+        assert not isinstance(d["vmin"], dsa.Array)
+        assert not isinstance(d["vmax"], dsa.Array)
 
 
 def dummy_plotfunc(da, fig, timestep, framedim, **kwargs):
@@ -334,6 +346,9 @@ def test_movie_save_frames(tmpdir, frame_pattern):
 def test_movie_save(
     tmpdir, parallel, filename, gif_palette, framerate, gif_framerate, ffmpeg_options
 ):
+    if not dask_array_avail:
+        pytest.skip("Parallel save requires `dask.array`")
+
     print(gif_palette)
     # Need more tests for progress, verbose, overwriting
     path = tmpdir.join(filename)
@@ -367,6 +382,7 @@ def test_movie_save(
         mov.save(path.strpath, overwrite_existing=False)
 
 
+@pytest.mark.skipif(not dask_array_avail, reason="needs `dask.array`")
 def test_movie_save_parallel_no_dask(tmpdir):
     path = tmpdir.join("movie.mp4")
     da = test_dataarray()
@@ -382,6 +398,7 @@ def test_movie_save_parallel_no_dask(tmpdir):
     )
 
 
+@pytest.mark.skipif(not dask_array_avail, reason="needs `dask.array`")
 def test_movie_save_parallel_wrong_chunk(tmpdir):
     path = tmpdir.join("movie.mp4")
     da = test_dataarray().chunk({"time": 2})

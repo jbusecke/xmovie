@@ -7,7 +7,6 @@ dependencies:
   - python
   #
   # xmovie core
-  - dask-core
   - matplotlib
   - numpy
   - xarray

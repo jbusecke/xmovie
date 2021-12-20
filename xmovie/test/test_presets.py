@@ -17,8 +17,6 @@ else:
     cartopy_avail = True
 
 
-
-
 def test_check_input():
     # this should be done with a more sophisticated example
     ds = xr.Dataset(

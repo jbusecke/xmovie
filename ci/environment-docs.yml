@@ -4,26 +4,32 @@ channels:
   - nodefaults
 dependencies:
   - python=3.8
-  # Core
-  - xarray
+  - pip
+  #
+  # xmovie core
   - matplotlib
-  - cartopy
+  - numpy
+  - xarray
+  #
   - ffmpeg
+  #
   # Optional
-  - tqdm
+  - cartopy
   - dask-core
+  - tqdm
+  #
   # Examples
-  - pooch
-  - jupyterlab
   - ipywidgets
+  - jupyterlab
+  - pooch
+  #
   # Docs
+  - nbsphinx
   - sphinx>=4.0
   - sphinx-autobuild
   - sphinx-book-theme
-  - nbsphinx
   - sphinx-copybutton
   #
-  - pip
   - pip:
     - sphinx-prompt
     - '-e ../'  # xmovie

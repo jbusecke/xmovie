@@ -6,29 +6,36 @@ import sys
 import warnings
 from subprocess import Popen, PIPE, STDOUT
 
-import dask.array as dsa
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import xarray as xr
 
-from .presets import _check_input, basic
+from .presets import basic
 
 try:
     from tqdm.auto import tqdm
-
-    tqdm_avail = True
-except:
+except ImportError:
     warnings.warn(
         "Optional dependency `tqdm` not found. "
         "This will make progressbars a lot nicer. "
         "Install with `conda install -c conda-forge tqdm`"
     )
     tqdm_avail = False
+else:
+    tqdm_avail = True
 
+try:
+    import dask.array as dsa
+except ImportError:
+    dask_array_avail = False
+else:
+    dask_array_avail = True
+
+
+# TODO: maybe should only change when necessary, using context manager
 mpl.use("Agg")
 
-# is it a good idea to set these here?
-# Needs to be dependent on dpi and videosize
+# TODO: should be dependent on dpi and videosize; don't change globally
 plt.rcParams.update({"font.size": 14})
 
 
@@ -61,7 +68,7 @@ def _parse_plot_defaults(da, kwargs):
 
     # if any value is dask.array compute them here.
     for k in ["vmin", "vmax"]:
-        if isinstance(kwargs[k], dsa.Array):
+        if dask_array_avail and isinstance(kwargs[k], dsa.Array):
             kwargs[k] = kwargs[k].compute()
 
     return kwargs
@@ -401,8 +408,8 @@ class Movie:
         parallel_compute_kwargs : dict
             Keyword arguments to pass to Dask's :meth:`~dask.array.Array.compute`.
         """
-        import numpy as np
-        import dask.array as darray
+        if not dask_array_avail:
+            raise Exception("Parallel save requires `dask.array`")
 
         da = self.data
         framedim = self.framedim

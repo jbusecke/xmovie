@@ -13,8 +13,6 @@ dependencies:
   - numpy
   - xarray
   #
-  - ffmpeg
-  #
   # Optional
   - cartopy
   - dask-core

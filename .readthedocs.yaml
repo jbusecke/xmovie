@@ -1,7 +1,8 @@
 version: 2
 
-conda:
-  environment: ci/environment-docs.yml
+python:
+  install:
+    - requirements: docs/requirements-rtd.txt
 
 sphinx:
   configuration: docs/conf.py

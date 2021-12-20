@@ -1,3 +1,5 @@
+# Conda environment for docs development,
+# including running the example notebooks
 name: xmovie-docs
 channels:
   - conda-forge
@@ -18,7 +20,7 @@ dependencies:
   - dask-core
   - tqdm
   #
-  # Examples
+  # Example notebooks
   - ipywidgets
   - jupyterlab
   - pooch
@@ -32,4 +34,4 @@ dependencies:
   #
   - pip:
     - sphinx-prompt
-    - '-e ../'  # xmovie
+    - '-e ../'  # xmovie itself

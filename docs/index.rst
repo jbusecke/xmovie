@@ -55,10 +55,17 @@ The main aims of this module are:
 Installation
 ------------
 
+.. important::
+
+   `ffmpeg`_ is required in order to create the movies from the saved PNG frames.
+   See `their installation instructions <https://ffmpeg.org/download.html>`_.
+   ``ffmpeg``\'s location must be in the OS search path (``PATH``) for movie creation to work.
+
 .. note::
 
    For now, ``dask(-core)`` and ``cartopy`` are included with ``xmovie``,
    but they may be optional dependencies in the future.
+
 
 Conda
 ~~~~~
@@ -68,6 +75,15 @@ The easiest way to install ``xmovie`` is via ``conda``:
 .. prompt:: bash
 
    conda install -c conda-forge xmovie
+
+
+.. note::
+
+   conda-forge includes a recipe for ffmpeg. To install both:
+
+   .. prompt:: bash
+
+      conda install -c conda-forge xmovie ffmpeg
 
 Pip
 ~~~
@@ -103,3 +119,5 @@ If you want to install the latest version from GitHub, simply run
 .. _xarray: https://xarray.pydata.org
 .. _Matplotlib: https://matplotlib.org
 .. _Dask: https://dask.org
+.. _ffmpeg: https://ffmpeg.org/
+.. _ffmpeg-download: https://ffmpeg.org/download.html

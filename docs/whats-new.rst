@@ -8,7 +8,7 @@ Packaging
 - ``cartopy`` (used in the :func:`~xmovie.rotating_globe` preset)
   and ``dask`` (used for parallel frame saving)
   are now optional extras instead of package requirements
-  (:pull:`XX`).
+  (:pull:`73`).
   By `zmoon <https://github.com/zmoon>`_.
 
 Documentation

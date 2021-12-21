@@ -7,6 +7,8 @@ Documentation
 ~~~~~~~~~~~~~
 - Sphinx docs build, published to Read the Docs (:pull:`67`).
   By `zmoon <https://github.com/zmoon>`_.
+- Add more readme badges (:pull:`72`).
+  By `zmoon <https://github.com/zmoon>`_.
 
 v0.2.0 (2021/4/20)
 ------------------

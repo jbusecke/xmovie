@@ -5,10 +5,9 @@ build:
   tools:
     python: "mambaforge-4.10"
 
-python:
-    install:
-       - method: setuptools
-         path: .
+sphinx:
+   configuration: docs/conf.py
+   fail_on_warning: true
 
 conda:
   environment: ci/environment-docs.yml

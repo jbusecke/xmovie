@@ -1,8 +1,13 @@
 version: 2
 
-conda:
-  environment: ci/environment-docs.yml
+build:
+  os: "ubuntu-20.04"
+  tools:
+    python: "mambaforge-4.10"
 
 sphinx:
-  configuration: docs/conf.py
-  fail_on_warning: true
+   configuration: docs/conf.py
+   fail_on_warning: true
+
+conda:
+  environment: ci/environment-docs.yml

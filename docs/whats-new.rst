@@ -15,6 +15,13 @@ Documentation
 ~~~~~~~~~~~~~
 - Sphinx docs build, published to Read the Docs (:pull:`67`).
   By `zmoon <https://github.com/zmoon>`_.
+- Add more readme badges (:pull:`72`).
+  By `zmoon <https://github.com/zmoon>`_.
+  
+Breaking Changes
+~~~~~~~~~~~~~~~~
+- Removed support for python 3.6 (:pull:`80`).
+  By `Julius Busecke <https://github.com/jbusecke>`_.
 
 v0.2.0 (2021/4/20)
 ------------------

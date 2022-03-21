@@ -304,7 +304,7 @@ class Movie:
         if input_check:
             if isinstance(self.data, xr.Dataset):
                 raise ValueError(
-                    "xmovie presets do not yet support the input of xr.Datasets.\nIn order to use datasets as inputs, set `input_check` to False.\nNote that this requires you to manually set colorlimits etc."
+                    "xmovie presets do not yet fully support the input of xr.Datasets.\nIn order to use datasets as inputs, set `input_check` to False.\nNote that this requires you to manually set colorlimits etc."
                 )
 
             # Set defaults

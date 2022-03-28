@@ -310,9 +310,7 @@ class Movie:
         if input_check:
             if isinstance(self.data, xr.Dataset):
                 raise ValueError(
-                    "xmovie presets do not yet support the input of xr.Datasets. \
-                In order to use datasets as inputs, set `input_check` to False. \
-                Note that this requires you to manually set colorlimits etc."
+                    "xmovie presets do not yet fully support the input of xr.Datasets.\nIn order to use datasets as inputs, set `input_check` to False.\nNote that this requires you to manually set colorlimits etc."
                 )
 
             # Set defaults
@@ -418,7 +416,13 @@ class Movie:
             raise ValueError(
                 f"Input data needs to be a dask array to save in parallel. Please chunk the input with single chunks along {framedim}."
             )
-        framedim_chunks = da.chunks[da.dims.index(framedim)]
+
+        if type(da) is xr.DataArray:
+            framedim_chunks = da.chunks[da.dims.index(framedim)]
+        elif type(da) is xr.Dataset:
+            framedim_chunks = da.chunks[framedim]
+        else:
+            raise(TypeError("`da` must be either an xarray.DataArray or xarray.Dataset"))
 
         if not all([chunk == 1 for chunk in framedim_chunks]):
             raise ValueError(

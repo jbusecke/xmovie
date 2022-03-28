@@ -1,6 +1,15 @@
 What's New
 ==========
-v0.3.0 (unreleased)
+v0.3.1
+-------------------
+
+Bug fixes
+~~~~~~~~~~~~~
+- Fixed a bug that prevented parallel frame saving to work with `xarray.Datasets` (:pull:`83`).
+  By `Tomas Chor <https://github.com/tomchor>`.
+
+
+v0.3.0 (2022/3/17)
 -------------------
 
 Packaging

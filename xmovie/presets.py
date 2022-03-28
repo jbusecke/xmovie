@@ -5,6 +5,8 @@ import matplotlib.ticker as mticker
 import numpy as np
 import xarray as xr
 
+from ._util import requires
+
 
 def _check_input(da, fieldname):
     # pick the data_var to plot
@@ -67,6 +69,7 @@ def _base_plot(ax, base_data, timestamp, framedim, plotmethod=None, **kwargs):
 
 
 # projections utilities and hacks
+@requires("cartopy", "shapely.geometry")
 def _smooth_boundary_NearsidePerspective(projection):
     import cartopy.crs as ccrs
     import shapely.geometry as sgeom
@@ -193,6 +196,7 @@ def _set_style(fig, ax, pp, style):
         plt.setp(plt.getp(cb.ax.axes, "yticklabels"), color=fgcolor)
 
 
+@requires("cartopy")
 def _add_land(ax, style):
     import cartopy.feature as cfeature
     from cartopy.mpl import geoaxes
@@ -206,6 +210,7 @@ def _add_land(ax, style):
     ax.add_feature(feature)
 
 
+@requires("cartopy")
 def _add_coast(ax, style):
     import cartopy.feature as cfeature
     from cartopy.mpl import geoaxes
@@ -236,6 +241,7 @@ def basic(
     return ax, pp
 
 
+@requires("cartopy")
 def rotating_globe(
     da,
     fig,
@@ -295,10 +301,7 @@ def rotating_globe(
     **kwargs
         Passed on to the xarray plotting method.
     """
-    try:
-        import cartopy.crs as ccrs
-    except ImportError as e:
-        raise Exception("This preset requires `cartopy`") from e
+    import cartopy.crs as ccrs
 
     # rotate lon_rotations times throughout movie and start at lon_start
     lon = np.linspace(0, 360 * lon_rotations, len(da[framedim])) + lon_start
@@ -354,6 +357,7 @@ def rotating_globe(
     return ax, pp
 
 
+@requires("cartopy")
 def rotating_globe_dark(da, fig, timestamp, **kwargs):
     warnings.warn(
         "This preset will be deprecated in the future. \

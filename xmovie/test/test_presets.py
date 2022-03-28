@@ -5,11 +5,12 @@ from xmovie.presets import (
     _check_input,
     _core_plot,
     _smooth_boundary_NearsidePerspective,
+    rotating_globe,
 )
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-from . import requires_cartopy
+from . import has_cartopy, requires_cartopy
 
 
 def test_check_input():
@@ -62,3 +63,9 @@ def test_smooth_boundary_NearsidePerspective(lon, lat, sat_height):
     assert type(pr) is type(pr_mod) and isinstance(pr_mod, ccrs.Projection)
     assert pr.proj4_params == pr_mod.proj4_params
     assert pr.globe == pr_mod.globe
+
+
+@pytest.mark.skipif(has_cartopy, reason="no req check error if cartopy is installed")
+def test_cartopy_req_check():
+    with pytest.raises(RuntimeError, match="Required modules failed to import: 'cartopy'"):
+        rotating_globe()

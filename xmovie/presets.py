@@ -144,7 +144,7 @@ def _set_style(fig, ax, pp, style):
     # Check if ax is 'normal' or cartopy projection
     try:
         from cartopy.mpl import geoaxes
-    except ImportError:
+    except ImportError:  # pragma: no cover
         is_geoax = False
     else:
         is_geoax = isinstance(ax, geoaxes.GeoAxesSubplot)

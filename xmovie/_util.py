@@ -27,7 +27,7 @@ def requires(*modules):
                     "Please install the relevant packages if you wish to proceed."
                 )
 
-            fn(*args, **kwargs)
+            return fn(*args, **kwargs)
 
         return wrapped
     

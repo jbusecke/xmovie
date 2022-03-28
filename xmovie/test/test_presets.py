@@ -9,12 +9,7 @@ from xmovie.presets import (
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-try:
-    import cartopy.crs as ccrs
-except ImportError:
-    cartopy_avail = False
-else:
-    cartopy_avail = True
+from . import requires_cartopy
 
 
 def test_check_input():
@@ -41,18 +36,20 @@ def test_check_input():
 )
 def test_core_plot(plotmethod, expected_type, filled):
     da = xr.DataArray(np.random.rand(4, 6))
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     pp = _core_plot(ax, da, plotmethod=plotmethod)
     assert isinstance(pp, expected_type)
     if not filled is None:
         assert pp.filled == filled
 
 
-@pytest.mark.skipif(not cartopy_avail, reason="Requires cartopy")
+@requires_cartopy
 @pytest.mark.parametrize("lon", [-700, -300, 1, 300, 700])
 @pytest.mark.parametrize("lat", [-200, -90, 0, 90, 180])
 @pytest.mark.parametrize("sat_height", [35785831, 45785831])
 def test_smooth_boundary_NearsidePerspective(lon, lat, sat_height):
+    import cartopy.crs as ccrs
+
     lon = -100
     lat = -40
     sat_height = 35785831
@@ -62,5 +59,6 @@ def test_smooth_boundary_NearsidePerspective(lon, lat, sat_height):
     # modify the projection with smooth boundary
     pr_mod = _smooth_boundary_NearsidePerspective(pr)
 
+    assert type(pr) is type(pr_mod) and isinstance(pr_mod, ccrs.Projection)
     assert pr.proj4_params == pr_mod.proj4_params
     assert pr.globe == pr_mod.globe

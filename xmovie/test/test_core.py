@@ -21,19 +21,11 @@ from xmovie.core import (
 )
 from xmovie.presets import basic, rotating_globe
 
-try:
-    import cartopy
-except ImportError:
-    cartopy_avail = False
-else:
-    cartopy_avail = True
-
-try:
-    import dask.array as dsa
-except ImportError:
-    dask_array_avail = False
-else:
-    dask_array_avail = True
+from . import (
+    has_cartopy, requires_cartopy,
+    has_dask, requires_dask,
+    has_dask_array, requires_dask_array,
+)
 
 
 def test_parse_plot_defaults():
@@ -54,9 +46,11 @@ def test_parse_plot_defaults():
         expected = _parse_plot_defaults(da, {var: "input"})[var]
         assert expected == "input"
     
-    if not dask_array_avail:
+    if not has_dask_array:
         pytest.skip("`dask.array` required")
     else:
+        import dask.array as dsa
+
         da = xr.DataArray(np.arange(20), dims=["x"]).chunk({"x": 1})
         d = _parse_plot_defaults(da, {})
         assert isinstance(da.data, dsa.Array)
@@ -253,7 +247,7 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
         pixelheight=pixelheight,
         dpi=dpi,
     )
-    if plotfunc is rotating_globe and not cartopy_avail:
+    if plotfunc is rotating_globe and not has_cartopy:
         pytest.skip("`rotating_globe` requires `cartopy`")
 
     # if not time, hide it to test changing default
@@ -346,7 +340,7 @@ def test_movie_save_frames(tmpdir, frame_pattern):
 def test_movie_save(
     tmpdir, parallel, filename, gif_palette, framerate, gif_framerate, ffmpeg_options
 ):
-    if not dask_array_avail:
+    if not has_dask_array:
         pytest.skip("Parallel save requires `dask.array`")
 
     print(gif_palette)
@@ -382,7 +376,7 @@ def test_movie_save(
         mov.save(path.strpath, overwrite_existing=False)
 
 
-@pytest.mark.skipif(not dask_array_avail, reason="needs `dask.array`")
+@requires_dask_array
 def test_movie_save_parallel_no_dask(tmpdir):
     path = tmpdir.join("movie.mp4")
     da = test_dataarray()
@@ -398,7 +392,7 @@ def test_movie_save_parallel_no_dask(tmpdir):
     )
 
 
-@pytest.mark.skipif(not dask_array_avail, reason="needs `dask.array`")
+@requires_dask_array
 def test_movie_save_parallel_wrong_chunk(tmpdir):
     path = tmpdir.join("movie.mp4")
     da = test_dataarray().chunk({"time": 2})
@@ -425,12 +419,13 @@ def test_plotfunc_kwargs(tmpdir):
     mov.save_frames_serial(tmpdir)
 
 
-def test_plotfunc_kwargs_xfail(tmpdir):
-    pytest.xfail(
-        "if **kwargs is not in the function signature \
-        and the input is checked, this should error out."
+@pytest.mark.xfail(
+    reason=(
+        "if **kwargs is not in the function signature "
+        "and the input is checked, this should error out."
     )
-
+)
+def test_plotfunc_kwargs_xfail(tmpdir):
     def plotfunc(ds, fig, tt, test1=None):
         if test1 is None:
             raise RuntimeError("test1 cannot be None")

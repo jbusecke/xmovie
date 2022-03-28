@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import xarray as xr
 
 from .presets import basic
+from ._util import requires
 
 try:
     from tqdm.auto import tqdm
@@ -397,6 +398,7 @@ class Movie:
                 fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
             )
 
+    @requires("dask.array")
     def save_frames_parallel(self, odir, parallel_compute_kwargs=dict()):
         """
         Saves all frames in parallel using dask.map_blocks.
@@ -408,9 +410,6 @@ class Movie:
         parallel_compute_kwargs : dict
             Keyword arguments to pass to Dask's :meth:`~dask.array.Array.compute`.
         """
-        if not dask_array_avail:
-            raise Exception("Parallel save requires `dask.array`")
-
         da = self.data
         framedim = self.framedim
 

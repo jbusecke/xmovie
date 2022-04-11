@@ -226,13 +226,14 @@ def combine_frames_into_movie(
 #     return fig
 
 
-def save_single_frame(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100):
+def save_single_frame(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100, bbox_inches=None):
     """ Saves a single frame of data from an already-created figure and then closes the figure """
     fig.savefig(
         os.path.join(odir, frame_pattern % (frame)),
         dpi=dpi,
         facecolor=fig.get_facecolor(),
         transparent=True,
+        bbox_inches=bbox_inches,
     )
     # I am trying everything to *wipe* this figure, hoping that it could
     # help with the dask glitches I experienced earlier.
@@ -253,6 +254,7 @@ class Movie:
         pixelwidth=1920,
         pixelheight=1080,
         dpi=200,
+        bbox_inches=None,
         frame_pattern="frame_%05d.png",
         fieldname=None,
         input_check=True,
@@ -274,6 +276,9 @@ class Movie:
             Movie size.
         dpi : int
             Movie resolution.
+        bbox_inches: str
+            Same as bbox_inches flag in savefig from matplotlib.
+            Bounding box in inches: only the given portion of the figure is saved. If 'tight', try to figure out the tight bbox of the figure.
         frame_pattern : str
             Filename pattern when saving frames.
         fieldname
@@ -285,6 +290,7 @@ class Movie:
         self.pixelwidth = pixelwidth
         self.pixelheight = pixelheight
         self.dpi = dpi
+        self.bbox_inches = bbox_inches
         self.width = self.pixelwidth / self.dpi
         self.height = self.pixelheight / self.dpi
         self.frame_pattern = frame_pattern
@@ -387,7 +393,7 @@ class Movie:
         for timestep in frame_range:
             fig, ax, pp = self.render_single_frame(timestep)
             save_single_frame(
-                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
+                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi, bbox_inches=self.bbox_inches
             )
 
     def save_frames_parallel(self, odir, parallel_compute_kwargs=dict()):
@@ -435,7 +441,7 @@ class Movie:
 
             fig, ax, pp = self.render_single_frame(timestep)
             save_single_frame(
-                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
+                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi, bbox_inches=self.bbox_inches
             )
 
             return time_of_chunk

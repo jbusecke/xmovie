@@ -1,7 +1,6 @@
 from .core import Movie
 from .presets import rotating_globe
 
-
 try:
     from ._version import __version__
 

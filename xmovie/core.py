@@ -4,14 +4,14 @@ import os
 import re
 import sys
 import warnings
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import PIPE, STDOUT, Popen
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import xarray as xr
 
-from .presets import basic
 from ._util import requires
+from .presets import basic
 
 try:
     from tqdm.auto import tqdm
@@ -98,11 +98,7 @@ def _check_ffmpeg_version():
     else:
         # parse version number
         try:
-            found = (
-                re.search("ffmpeg version (.+?) Copyright", str(output))
-                .group(1)
-                .replace(" ", "")
-            )
+            found = re.search("ffmpeg version (.+?) Copyright", str(output)).group(1).replace(" ", "")
             return found
         except AttributeError:
             # ffmpeg version, Copyright not found in the original string
@@ -147,9 +143,7 @@ def _check_ffmpeg_execute(command, verbose=False):
             )
 
 
-def _combine_ffmpeg_command(
-    sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options
-):
+def _combine_ffmpeg_command(sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options):
     # we need `-y` because i can not properly diagnose the errors here...
     command = 'ffmpeg -r %i -i "%s" -y %s -r %i "%s"' % (
         framerate,
@@ -178,9 +172,7 @@ def convert_gif(
 ):
 
     if gif_palette:
-        palette_filter = (
-            '-filter_complex "[0:v] split [a][b];[a] palettegen [p];[b][p] paletteuse"'
-        )
+        palette_filter = '-filter_complex "[0:v] split [a][b];[a] palettegen [p];[b][p] paletteuse"'
     else:
         palette_filter = ""
 
@@ -211,9 +203,7 @@ def combine_frames_into_movie(
     framerate=20,
 ):
 
-    command = _combine_ffmpeg_command(
-        sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options
-    )
+    command = _combine_ffmpeg_command(sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options)
     p = _check_ffmpeg_execute(command, verbose=verbose)
 
     print("Movie created at %s" % (moviename))
@@ -233,7 +223,7 @@ def combine_frames_into_movie(
 
 
 def save_single_frame(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100):
-    """ Saves a single frame of data from an already-created figure and then closes the figure """
+    """Saves a single frame of data from an already-created figure and then closes the figure"""
     fig.savefig(
         os.path.join(odir, frame_pattern % (frame)),
         dpi=dpi,
@@ -347,9 +337,7 @@ class Movie:
         # produce dummy output for ax and pp if the plotfunc does not provide them
         if self.plotfunc_n_outargs == 2:
             # this should be the case for all presets provided by xmovie
-            ax, pp = self.plotfunc(
-                self.data, fig, timestep, self.framedim, **self.kwargs
-            )
+            ax, pp = self.plotfunc(self.data, fig, timestep, self.framedim, **self.kwargs)
         else:
             warnings.warn(
                 "The provided `plotfunc` does not provide the expected number of output arguments.\
@@ -368,9 +356,7 @@ class Movie:
         timestep : int
             Timestep (frame) to preview.
         """
-        with plt.rc_context(
-            {"figure.dpi": self.dpi, "figure.figsize": [self.width, self.height]}
-        ):
+        with plt.rc_context({"figure.dpi": self.dpi, "figure.figsize": [self.width, self.height]}):
             fig, ax, pp = self.render_single_frame(timestep)
 
     def save_frames_serial(self, odir, progress=False):
@@ -392,9 +378,7 @@ class Movie:
 
         for timestep in frame_range:
             fig, ax, pp = self.render_single_frame(timestep)
-            save_single_frame(
-                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
-            )
+            save_single_frame(fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi)
 
     @requires("dask.array")
     def save_frames_parallel(self, odir, parallel_compute_kwargs=dict()):
@@ -422,7 +406,7 @@ class Movie:
         elif type(da) is xr.Dataset:
             framedim_chunks = da.chunks[framedim]
         else:
-            raise(TypeError("`da` must be either an xarray.DataArray or xarray.Dataset"))
+            raise (TypeError("`da` must be either an xarray.DataArray or xarray.Dataset"))
 
         if not all([chunk == 1 for chunk in framedim_chunks]):
             raise ValueError(
@@ -438,9 +422,7 @@ class Movie:
             )  # get index of chunk in framedim
 
             fig, ax, pp = self.render_single_frame(timestep)
-            save_single_frame(
-                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi
-            )
+            save_single_frame(fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi)
 
             return time_of_chunk
 
@@ -536,8 +518,7 @@ class Movie:
         if os.path.exists(mpath):
             if not overwrite_existing:
                 raise RuntimeError(
-                    "File `%s` already exists. Set `overwrite_existing` to True to overwrite."
-                    % (mpath)
+                    "File `%s` already exists. Set `overwrite_existing` to True to overwrite." % (mpath)
                 )
         if isgif:
             if os.path.exists(gpath):
@@ -549,9 +530,7 @@ class Movie:
 
         # print frames
         if parallel:
-            self.save_frames_parallel(
-                dirname, parallel_compute_kwargs=parallel_compute_kwargs
-            )
+            self.save_frames_parallel(dirname, parallel_compute_kwargs=parallel_compute_kwargs)
         else:
             self.save_frames_serial(dirname, progress=progress)
 

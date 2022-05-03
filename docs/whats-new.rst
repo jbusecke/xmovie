@@ -30,7 +30,7 @@ Documentation
   By `zmoon <https://github.com/zmoon>`_.
 - Add more readme badges (:pull:`72`).
   By `zmoon <https://github.com/zmoon>`_.
-  
+
 Breaking Changes
 ~~~~~~~~~~~~~~~~
 - Removed support for python 3.6 (:pull:`80`).

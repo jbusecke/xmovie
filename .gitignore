@@ -74,9 +74,9 @@ target/
 **/dask-worker-space
 
 # movie and picture files
-*.png 
+*.png
 *.mov
-*.mp4 
+*.mp4
 *.gif
 !docs/examples/*.gif
 !docs/examples/*.png

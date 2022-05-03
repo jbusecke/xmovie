@@ -1,14 +1,15 @@
-import xarray as xr
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+import xarray as xr
+
 from xmovie.presets import (
     _check_input,
     _core_plot,
     _smooth_boundary_NearsidePerspective,
     rotating_globe,
 )
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 
 from . import has_cartopy, requires_cartopy
 
@@ -40,7 +41,7 @@ def test_core_plot(plotmethod, expected_type, filled):
     _, ax = plt.subplots()
     pp = _core_plot(ax, da, plotmethod=plotmethod)
     assert isinstance(pp, expected_type)
-    if not filled is None:
+    if filled is not None:
         assert pp.filled == filled
 
 

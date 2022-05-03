@@ -9,23 +9,19 @@ import xarray as xr
 from PIL import Image
 
 from xmovie.core import (
-    _parse_plot_defaults,
+    Movie,
+    _check_ffmpeg_execute,
     _check_plotfunc_output,
     _combine_ffmpeg_command,
     _execute_command,
-    _check_ffmpeg_execute,
-    save_single_frame,
+    _parse_plot_defaults,
     combine_frames_into_movie,
     convert_gif,
-    Movie,
+    save_single_frame,
 )
 from xmovie.presets import basic, rotating_globe
 
-from . import (
-    has_cartopy, requires_cartopy,
-    has_dask, requires_dask,
-    has_dask_array, requires_dask_array,
-)
+from . import has_cartopy, has_dask_array, requires_dask_array
 
 
 def test_parse_plot_defaults():
@@ -45,7 +41,7 @@ def test_parse_plot_defaults():
     for var in ["vmin", "vmax", "test"]:
         expected = _parse_plot_defaults(da, {var: "input"})[var]
         assert expected == "input"
-    
+
     if not has_dask_array:
         pytest.skip("`dask.array` required")
     else:
@@ -97,9 +93,7 @@ def test_check_ffmpeg_version():
     pass
 
 
-@pytest.mark.parametrize(
-    "dir, fname, path", [("", "file", "file"), ("foo", "file", "foo/file")]
-)
+@pytest.mark.parametrize("dir, fname, path", [("", "file", "file"), ("foo", "file", "foo/file")])
 @pytest.mark.parametrize("frame_pattern", ["frame_%05d.png", "test%05d.png"])
 @pytest.mark.parametrize("framerate", [5, 25])
 @pytest.mark.parametrize(
@@ -109,9 +103,7 @@ def test_check_ffmpeg_version():
         "-c:v libx264 -preset slow -crf 15 -pix_fmt yuv420p",
     ],
 )
-def test_combine_ffmpeg_command(
-    dir, fname, path, frame_pattern, framerate, ffmpeg_options
-):
+def test_combine_ffmpeg_command(dir, fname, path, frame_pattern, framerate, ffmpeg_options):
     cmd = _combine_ffmpeg_command(dir, fname, framerate, frame_pattern, ffmpeg_options)
     assert cmd == 'ffmpeg -r %i -i "%s" -y %s -r %i "%s"' % (
         framerate,
@@ -194,9 +186,7 @@ def test_write_movie(tmpdir, moviename, remove_frames, framerate, ffmpeg_options
 @pytest.mark.parametrize("gifname", ["movie.gif"])
 @pytest.mark.parametrize("remove_movie", [True, False])
 @pytest.mark.parametrize("gif_framerate", [10, 15])
-def test_convert_gif(
-    tmpdir, moviename, remove_movie, gif_palette, gifname, gif_framerate
-):
+def test_convert_gif(tmpdir, moviename, remove_movie, gif_palette, gifname, gif_framerate):
     m = tmpdir.join(moviename)
     mpath = m.strpath
     g = tmpdir.join(gifname)
@@ -259,9 +249,7 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
         assert mov.plotfunc == basic
     else:
         assert mov.plotfunc == plotfunc
-    assert mov.plotfunc_n_outargs == _check_plotfunc_output(
-        mov.plotfunc, mov.data, framedim
-    )
+    assert mov.plotfunc_n_outargs == _check_plotfunc_output(mov.plotfunc, mov.data, framedim)
 
     assert mov.dpi == dpi
     assert mov.framedim == framedim
@@ -285,9 +273,7 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
     assert mov.kwargs == {}  # there are no kwargs set that are not used by Movie
 
 
-@pytest.mark.parametrize(
-    "plotfunc, expected_empty", [(dummy_plotfunc, True), (basic, False)]
-)
+@pytest.mark.parametrize("plotfunc, expected_empty", [(dummy_plotfunc, True), (basic, False)])
 def test_movie_render_frame(plotfunc, expected_empty):
     da = test_dataarray()
     mov = Movie(da, plotfunc=plotfunc)
@@ -301,9 +287,7 @@ def test_movie_render_frame(plotfunc, expected_empty):
 
     else:
         fig, ax, pp = mov.render_single_frame(1)
-        assert isinstance(
-            ax, mpl.axes.Axes
-        )  # this needs to be tested for the projections aswell
+        assert isinstance(ax, mpl.axes.Axes)  # this needs to be tested for the projections aswell
         assert isinstance(fig, mpl.figure.Figure)
 
     # This needs to be tested more exensively, especially whith multiple axes
@@ -337,9 +321,7 @@ def test_movie_save_frames(tmpdir, frame_pattern):
         "-c:v libx264 -preset slow -crf 15 -pix_fmt yuv420p",
     ],
 )
-def test_movie_save(
-    tmpdir, parallel, filename, gif_palette, framerate, gif_framerate, ffmpeg_options
-):
+def test_movie_save(tmpdir, parallel, filename, gif_palette, framerate, gif_framerate, ffmpeg_options):
     if not has_dask_array:
         pytest.skip("Parallel save requires `dask.array`")
 
@@ -387,9 +369,7 @@ def test_movie_save_parallel_no_dask(tmpdir):
             parallel=True,
         )
 
-    assert "Input data needs to be a dask array to save in parallel" in str(
-        excinfo.value
-    )
+    assert "Input data needs to be a dask array to save in parallel" in str(excinfo.value)
 
 
 @requires_dask_array

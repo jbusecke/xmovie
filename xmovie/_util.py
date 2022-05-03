@@ -10,8 +10,8 @@ def requires(*modules):
     *modules : iterable of str
         Required modules to check for.
     """
-    def inner(fn):
 
+    def inner(fn):
         @wraps(fn)
         def wrapped(*args, **kwargs):
             failed = []
@@ -20,7 +20,7 @@ def requires(*modules):
                     importlib.import_module(module)
                 except ImportError:
                     failed.append(module)
-            
+
             if failed:
                 raise RuntimeError(
                     f"Required modules failed to import: {', '.join(f'{m!r}' for m in modules)}. "
@@ -30,5 +30,5 @@ def requires(*modules):
             return fn(*args, **kwargs)
 
         return wrapped
-    
+
     return inner

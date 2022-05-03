@@ -13,9 +13,7 @@ def _check_input(da, fieldname):
     if isinstance(da, xr.Dataset):
         if fieldname is None:
             fieldname = list(da.data_vars)[0]
-            warnings.warn(
-                "No `fieldname` supplied. Defaults to `%s`" % fieldname, UserWarning
-            )
+            warnings.warn("No `fieldname` supplied. Defaults to `%s`" % fieldname, UserWarning)
         data = da[fieldname]
     elif isinstance(da, xr.DataArray):
         data = da
@@ -63,7 +61,7 @@ def _core_plot(ax, data, plotmethod=None, **kwargs):
 
 
 def _base_plot(ax, base_data, timestamp, framedim, plotmethod=None, **kwargs):
-    data = base_data.isel({framedim:timestamp})
+    data = base_data.isel({framedim: timestamp})
     p = _core_plot(ax, data, plotmethod=plotmethod, **kwargs)
     return p
 
@@ -77,7 +75,6 @@ def _smooth_boundary_NearsidePerspective(projection):
     # workaround for a smoother outer boundary
     # (https://github.com/SciTools/cartopy/issues/613)
     # Re-implement the cartopy code to figure out the boundary.
-
     # This is just really a guess....
     WGS84_SEMIMAJOR_AXIS = 6378137.0
     # because I cannot import it above...this should be fixed upstream
@@ -214,7 +211,7 @@ def _add_land(ax, style):
 def _add_coast(ax, style):
     import cartopy.feature as cfeature
     from cartopy.mpl import geoaxes
-    
+
     if not isinstance(ax, geoaxes.GeoAxesSubplot):
         raise ValueError("Cannot add land on non-cartopy axes. Got ($s)" % type(ax))
     style_dict = _style_dict(style)
@@ -228,7 +225,9 @@ def _add_coast(ax, style):
     ax.add_feature(feature)
 
 
-### Presets (should proabably put all others into a submodule)
+# Presets (should proabably put all others into a submodule)
+
+
 def basic(
     da, fig, timestamp, framedim="time", plotmethod=None, plot_variable=None, subplot_kw=None, **kwargs
 ):
@@ -311,9 +310,7 @@ def rotating_globe(
     # proj = ccrs.Orthographic(lon[timestamp], lat[timestamp])
     # proj = _smooth_boundary_globe(proj)
     # This looks more like a 3D globe in my opinion
-    proj = ccrs.NearsidePerspective(
-        central_longitude=lon[timestamp], central_latitude=lat[timestamp]
-    )
+    proj = ccrs.NearsidePerspective(central_longitude=lon[timestamp], central_latitude=lat[timestamp])
     proj = _smooth_boundary_NearsidePerspective(proj)
 
     subplot_kw = dict(projection=proj)

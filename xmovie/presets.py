@@ -210,7 +210,9 @@ def _add_coast(ax, style):
     ax.add_feature(feature)
 
 
-### Presets (should proabably put all others into a submodule)
+# Presets (should proabably put all others into a submodule)
+
+
 def basic(
     da, fig, timestamp, framedim="time", plotmethod=None, plot_variable=None, subplot_kw=None, **kwargs
 ):

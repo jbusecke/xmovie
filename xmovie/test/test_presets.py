@@ -39,7 +39,7 @@ def test_core_plot(plotmethod, expected_type, filled):
     fig, ax = plt.subplots()
     pp = _core_plot(ax, da, plotmethod=plotmethod)
     assert isinstance(pp, expected_type)
-    if not filled is None:
+    if filled is not None:
         assert pp.filled == filled
 
 

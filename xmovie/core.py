@@ -12,13 +12,13 @@ from subprocess import PIPE, STDOUT, Popen
 import matplotlib.pyplot as plt
 import xarray as xr
 
-from .presets import _check_input, basic
+from .presets import basic
 
 try:
     from tqdm.auto import tqdm
 
     tqdm_avail = True
-except:
+except Exception:
     warnings.warn(
         "Optional dependency `tqdm` not found. This will make progressbars a lot nicer. \
     Install with `conda install -c conda-forge tqdm`"
@@ -385,9 +385,6 @@ class Movie:
         parallel_compute_kwargs : dict
             Keyword arguments to pass to Dask's :meth:`~dask.array.Array.compute`.
         """
-        import dask.array as darray
-        import numpy as np
-
         da = self.data
         framedim = self.framedim
 

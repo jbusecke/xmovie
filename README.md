@@ -1,6 +1,7 @@
 # xmovie
 [![Build Status](https://img.shields.io/github/workflow/status/jbusecke/xmovie/CI?logo=github)](https://github.com/jbusecke/xmovie/actions)
 [![Documentation Status](https://readthedocs.org/projects/xmovie/badge/?version=latest)](https://xmovie.readthedocs.io/en/latest/)
+[![pre-commit.ci Status](https://results.pre-commit.ci/badge/github/jbusecke/xmovie/master.svg)](https://results.pre-commit.ci/latest/github/jbusecke/xmovie/master)
 [![codecov %](https://codecov.io/gh/jbusecke/xmovie/branch/master/graph/badge.svg)](https://codecov.io/gh/jbusecke/xmovie)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![DOI](https://zenodo.org/badge/124968397.svg)](https://zenodo.org/badge/latestdoi/124968397)

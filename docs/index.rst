@@ -88,13 +88,13 @@ If you want to install the latest version from GitHub, simply run
    pip install git+https://github.com/jbusecke/xmovie.git
 
 .. note::
-   
+
    If you dont have
    `ssh keys set up <https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account>`_,
    you can use
-   
+
    .. prompt:: bash
-   
+
       git clone https://github.com/jbusecke/xmovie.git`
 
    and enter your github password.

@@ -22,7 +22,7 @@ They have a signature of the type:
 
 .. code-block::
 
-    plotfunc(da, fig, timestamp, framedim, **kwargs):
+    def plotfunc(da, fig, timestamp, framedim, **kwargs):
         ...
 
 .. autosummary::

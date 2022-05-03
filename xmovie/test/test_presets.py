@@ -1,14 +1,15 @@
-import xarray as xr
+import cartopy.crs as ccrs
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+import xarray as xr
+
 from xmovie.presets import (
     _check_input,
     _core_plot,
     _smooth_boundary_NearsidePerspective,
 )
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
 
 
 def test_check_input():

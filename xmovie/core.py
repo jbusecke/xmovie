@@ -399,7 +399,7 @@ class Movie:
         elif type(da) is xr.Dataset:
             framedim_chunks = da.chunks[framedim]
         else:
-            raise (TypeError("`da` must be either an xarray.DataArray or xarray.Dataset"))
+            raise TypeError("`da` must be either an xarray.DataArray or xarray.Dataset")
 
         if not all([chunk == 1 for chunk in framedim_chunks]):
             raise ValueError(

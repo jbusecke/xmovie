@@ -19,7 +19,7 @@ dependencies:
   - dask-core
   # - nc-time-axis
   # - scipy
-  # - tqdm
+  - tqdm
   #
   # Test
   - opencv

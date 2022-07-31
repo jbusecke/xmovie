@@ -21,3 +21,4 @@ def _importorskip(modname, minversion=None):
 has_cartopy, requires_cartopy = _importorskip("cartopy")
 has_dask, requires_dask = _importorskip("dask")
 has_dask_array, requires_dask_array = _importorskip("dask.array")
+has_tqdm, requires_tqdm = _importorskip("tqdm")

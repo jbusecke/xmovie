@@ -374,7 +374,7 @@ class Movie:
         if tqdm_avail and progress:
             frame_range = tqdm(frame_range)
         elif ~tqdm_avail and progress:
-            warnings.warn("Cant show progess bar at this point. Install tqdm")
+            warnings.warn("Can't show progess bar at this point. Install tqdm.")
 
         for timestep in frame_range:
             fig, ax, pp = self.render_single_frame(timestep)

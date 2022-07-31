@@ -199,7 +199,7 @@ def _add_land(ax, style):
     from cartopy.mpl import geoaxes
 
     if not isinstance(ax, geoaxes.GeoAxesSubplot):
-        raise ValueError("Cannot add land on non-cartopy axes. Got ($s)" % type(ax))
+        raise TypeError("Cannot add land on non-cartopy axes. Got %s." % type(ax))
     style_dict = _style_dict(style)
     feature = cfeature.NaturalEarthFeature(
         name="land", category="physical", scale="50m", facecolor=style_dict["landcolor"]
@@ -213,7 +213,7 @@ def _add_coast(ax, style):
     from cartopy.mpl import geoaxes
 
     if not isinstance(ax, geoaxes.GeoAxesSubplot):
-        raise ValueError("Cannot add land on non-cartopy axes. Got ($s)" % type(ax))
+        raise TypeError("Cannot add land on non-cartopy axes. Got %s." % type(ax))
     style_dict = _style_dict(style)
     feature = cfeature.NaturalEarthFeature(
         name="coastline",

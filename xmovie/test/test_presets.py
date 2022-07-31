@@ -74,3 +74,11 @@ def test_smooth_boundary_NearsidePerspective(lon, lat, sat_height):
 def test_cartopy_req_check(fn):
     with pytest.raises(RuntimeError, match="Required modules failed to import: 'cartopy'"):
         fn()
+
+
+@requires_cartopy
+@pytest.mark.parametrize("fn", [_add_coast, _add_land])
+def test_raise_no_geoax(fn):
+    _, ax = plt.subplots()
+    with pytest.raises(TypeError, match="^Cannot add land on non-cartopy axes."):
+        fn(ax, "standard")

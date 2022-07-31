@@ -5,10 +5,13 @@ import pytest
 import xarray as xr
 
 from xmovie.presets import (
+    _add_coast,
+    _add_land,
     _check_input,
     _core_plot,
     _smooth_boundary_NearsidePerspective,
     rotating_globe,
+    rotating_globe_dark,
 )
 
 from . import has_cartopy, requires_cartopy
@@ -67,6 +70,7 @@ def test_smooth_boundary_NearsidePerspective(lon, lat, sat_height):
 
 
 @pytest.mark.skipif(has_cartopy, reason="no req check error if cartopy is installed")
-def test_cartopy_req_check():
+@pytest.mark.parametrize("fn", [_add_coast, _add_land, rotating_globe, rotating_globe_dark])
+def test_cartopy_req_check(fn):
     with pytest.raises(RuntimeError, match="Required modules failed to import: 'cartopy'"):
-        rotating_globe()
+        fn()

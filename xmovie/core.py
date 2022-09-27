@@ -217,7 +217,7 @@ def combine_frames_into_movie(
 
 
 def save_single_frame(fig, frame, odir=None, frame_pattern="frame_%05d.png", dpi=100, bbox_inches=None):
-    """ Saves a single frame of data from an already-created figure and then closes the figure """
+    """Saves a single frame of data from an already-created figure and then closes the figure"""
     fig.savefig(
         os.path.join(odir, frame_pattern % (frame)),
         dpi=dpi,
@@ -379,7 +379,12 @@ class Movie:
         for timestep in frame_range:
             fig, ax, pp = self.render_single_frame(timestep)
             save_single_frame(
-                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi, bbox_inches=self.bbox_inches
+                fig,
+                timestep,
+                odir=odir,
+                frame_pattern=self.frame_pattern,
+                dpi=self.dpi,
+                bbox_inches=self.bbox_inches,
             )
 
     def save_frames_parallel(self, odir, parallel_compute_kwargs=dict()):
@@ -424,7 +429,12 @@ class Movie:
 
             fig, ax, pp = self.render_single_frame(timestep)
             save_single_frame(
-                fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi, bbox_inches=self.bbox_inches
+                fig,
+                timestep,
+                odir=odir,
+                frame_pattern=self.frame_pattern,
+                dpi=self.dpi,
+                bbox_inches=self.bbox_inches,
             )
 
             return time_of_chunk

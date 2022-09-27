@@ -1,0 +1,9 @@
+# pip requirements to build the docs on RTD
+# (example notebook deps are not needed since we do not run them in the docs build)
+../
+ipython
+nbsphinx
+sphinx ~= 4.0
+sphinx-book-theme
+sphinx-copybutton
+sphinx-prompt

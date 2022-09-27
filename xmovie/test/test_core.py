@@ -1,7 +1,6 @@
 import os
 
 import cv2
-import dask.array as dsa
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,6 +21,8 @@ from xmovie.core import (
 )
 from xmovie.presets import basic, rotating_globe
 
+from . import has_cartopy, has_dask_array, requires_dask_array
+
 
 def test_parse_plot_defaults():
     # create dummy array
@@ -33,16 +34,24 @@ def test_parse_plot_defaults():
     # deactivated while bug persists..
     # assert d["cbar_kwargs"] == dict(extend="neither")
     assert d["extend"] == "neither"
-    da = xr.DataArray(np.arange(20), dims=["x"]).chunk({"x": 1})
-    d = _parse_plot_defaults(da, {})
-    assert isinstance(da.data, dsa.Array)
-    assert not isinstance(d["vmin"], dsa.Array)
-    assert not isinstance(d["vmax"], dsa.Array)
+
     with pytest.raises(RuntimeError):
         _parse_plot_defaults(5, {})
+
     for var in ["vmin", "vmax", "test"]:
         expected = _parse_plot_defaults(da, {var: "input"})[var]
         assert expected == "input"
+
+    if not has_dask_array:
+        pytest.skip("`dask.array` required")
+    else:
+        import dask.array as dsa
+
+        da = xr.DataArray(np.arange(20), dims=["x"]).chunk({"x": 1})
+        d = _parse_plot_defaults(da, {})
+        assert isinstance(da.data, dsa.Array)
+        assert not isinstance(d["vmin"], dsa.Array)
+        assert not isinstance(d["vmax"], dsa.Array)
 
 
 def dummy_plotfunc(da, fig, timestep, framedim, **kwargs):
@@ -228,6 +237,8 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
         pixelheight=pixelheight,
         dpi=dpi,
     )
+    if plotfunc is rotating_globe and not has_cartopy:
+        pytest.skip("`rotating_globe` requires `cartopy`")
 
     # if not time, hide it to test changing default
     if framedim != "time":
@@ -311,6 +322,9 @@ def test_movie_save_frames(tmpdir, frame_pattern):
     ],
 )
 def test_movie_save(tmpdir, parallel, filename, gif_palette, framerate, gif_framerate, ffmpeg_options):
+    if not has_dask_array:
+        pytest.skip("Parallel save requires `dask.array`")
+
     print(gif_palette)
     # Need more tests for progress, verbose, overwriting
     path = tmpdir.join(filename)
@@ -344,6 +358,7 @@ def test_movie_save(tmpdir, parallel, filename, gif_palette, framerate, gif_fram
         mov.save(path.strpath, overwrite_existing=False)
 
 
+@requires_dask_array
 def test_movie_save_parallel_no_dask(tmpdir):
     path = tmpdir.join("movie.mp4")
     da = test_dataarray()
@@ -357,6 +372,7 @@ def test_movie_save_parallel_no_dask(tmpdir):
     assert "Input data needs to be a dask array to save in parallel" in str(excinfo.value)
 
 
+@requires_dask_array
 def test_movie_save_parallel_wrong_chunk(tmpdir):
     path = tmpdir.join("movie.mp4")
     da = test_dataarray().chunk({"time": 2})
@@ -383,12 +399,13 @@ def test_plotfunc_kwargs(tmpdir):
     mov.save_frames_serial(tmpdir)
 
 
-def test_plotfunc_kwargs_xfail(tmpdir):
-    pytest.xfail(
-        "if **kwargs is not in the function signature \
-        and the input is checked, this should error out."
+@pytest.mark.xfail(
+    reason=(
+        "if **kwargs is not in the function signature "
+        "and the input is checked, this should error out."
     )
-
+)
+def test_plotfunc_kwargs_xfail(tmpdir):
     def plotfunc(ds, fig, tt, test1=None):
         if test1 is None:
             raise RuntimeError("test1 cannot be None")

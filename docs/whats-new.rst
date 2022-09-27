@@ -1,16 +1,28 @@
 What's New
 ==========
-v0.3.1
+
+v0.y.z (unreleased)
 -------------------
+
+Packaging
+~~~~~~~~~
+- ``cartopy`` (used in the :func:`~xmovie.rotating_globe` preset)
+  and ``dask`` (used for parallel frame saving)
+  are now optional extras instead of package requirements
+  (:pull:`73`).
+  By `zmoon <https://github.com/zmoon>`_.
+
+v0.3.1 (2022/3/21)
+------------------
 
 Bug fixes
 ~~~~~~~~~~~~~
-- Fixed a bug that prevented parallel frame saving to work with `xarray.Datasets` (:pull:`83`).
-  By `Tomas Chor <https://github.com/tomchor>`.
+- Fixed a bug that prevented parallel frame saving to work with :class:`xarray.Dataset`\s (:pull:`83`).
+  By `Tomas Chor <https://github.com/tomchor>`_.
 
 
 v0.3.0 (2022/3/17)
--------------------
+------------------
 
 Documentation
 ~~~~~~~~~~~~~

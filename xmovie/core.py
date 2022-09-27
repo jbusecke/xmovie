@@ -1,6 +1,3 @@
-import matplotlib as mpl
-
-mpl.use("Agg")
 import gc
 import glob
 import os
@@ -9,28 +6,37 @@ import sys
 import warnings
 from subprocess import PIPE, STDOUT, Popen
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import xarray as xr
 
+from ._util import requires
 from .presets import basic
 
 try:
     from tqdm.auto import tqdm
-
-    tqdm_avail = True
-except Exception:
+except ImportError:
     warnings.warn(
-        "Optional dependency `tqdm` not found. This will make progressbars a lot nicer. \
-    Install with `conda install -c conda-forge tqdm`"
+        "Optional dependency `tqdm` not found. "
+        "This will make progressbars a lot nicer. "
+        "Install with `conda install -c conda-forge tqdm`"
     )
     tqdm_avail = False
+else:
+    tqdm_avail = True
 
-# import xarray as xr
-# import dask.bag as db
-import dask.array as dsa
+try:
+    import dask.array as dsa
+except ImportError:
+    dask_array_avail = False
+else:
+    dask_array_avail = True
 
-# is it a good idea to set these here?
-# Needs to be dependent on dpi and videosize
+
+# TODO: maybe should only change when necessary, using context manager
+mpl.use("Agg")
+
+# TODO: should be dependent on dpi and videosize; don't change globally
 plt.rcParams.update({"font.size": 14})
 
 
@@ -63,7 +69,7 @@ def _parse_plot_defaults(da, kwargs):
 
     # if any value is dask.array compute them here.
     for k in ["vmin", "vmax"]:
-        if isinstance(kwargs[k], dsa.Array):
+        if dask_array_avail and isinstance(kwargs[k], dsa.Array):
             kwargs[k] = kwargs[k].compute()
 
     return kwargs
@@ -368,12 +374,13 @@ class Movie:
         if tqdm_avail and progress:
             frame_range = tqdm(frame_range)
         elif ~tqdm_avail and progress:
-            warnings.warn("Cant show progess bar at this point. Install tqdm")
+            warnings.warn("Can't show progess bar at this point. Install tqdm.")
 
         for timestep in frame_range:
             fig, ax, pp = self.render_single_frame(timestep)
             save_single_frame(fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi)
 
+    @requires("dask.array")
     def save_frames_parallel(self, odir, parallel_compute_kwargs=dict()):
         """
         Saves all frames in parallel using dask.map_blocks.

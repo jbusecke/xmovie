@@ -1,13 +1,11 @@
 import warnings
 
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
-import shapely.geometry as sgeom
 import xarray as xr
-from cartopy.mpl import geoaxes
+
+from ._util import requires
 
 
 def _check_input(da, fieldname):
@@ -69,11 +67,14 @@ def _base_plot(ax, base_data, timestamp, framedim, plotmethod=None, **kwargs):
 
 
 # projections utilities and hacks
+@requires("cartopy", "shapely.geometry")
 def _smooth_boundary_NearsidePerspective(projection):
+    import cartopy.crs as ccrs
+    import shapely.geometry as sgeom
+
     # workaround for a smoother outer boundary
     # (https://github.com/SciTools/cartopy/issues/613)
     # Re-implement the cartopy code to figure out the boundary.
-
     # This is just really a guess....
     WGS84_SEMIMAJOR_AXIS = 6378137.0
     # because I cannot import it above...this should be fixed upstream
@@ -90,6 +91,9 @@ def _smooth_boundary_NearsidePerspective(projection):
 
 
 # def _smooth_boundary_globe(projection):
+#    import cartopy.crs as ccrs
+#    import shapely.geometry as sgeom
+#
 #     # workaround for a smoother outer boundary
 #     # (https://github.com/SciTools/cartopy/issues/613)
 #
@@ -134,10 +138,13 @@ def _style_dict(style=None):
 
 def _set_style(fig, ax, pp, style):
     "Sets the colorscheme for figure, axis and plot object (`pp`) according to style"
-    # check if ax is 'normal' or cartopy projection
-    is_geoax = False
-    if isinstance(ax, geoaxes.GeoAxesSubplot):
-        is_geoax = True
+    # Check if ax is 'normal' or cartopy projection
+    try:
+        from cartopy.mpl import geoaxes
+    except ImportError:  # pragma: no cover
+        is_geoax = False
+    else:
+        is_geoax = isinstance(ax, geoaxes.GeoAxesSubplot)
 
     # parse styles
     style_dict = _style_dict(style)
@@ -186,9 +193,13 @@ def _set_style(fig, ax, pp, style):
         plt.setp(plt.getp(cb.ax.axes, "yticklabels"), color=fgcolor)
 
 
+@requires("cartopy")
 def _add_land(ax, style):
+    import cartopy.feature as cfeature
+    from cartopy.mpl import geoaxes
+
     if not isinstance(ax, geoaxes.GeoAxesSubplot):
-        raise ValueError("Cannot add land on non-cartopy axes. Got ($s)" % type(ax))
+        raise TypeError("Cannot add land on non-cartopy axes. Got %s." % type(ax))
     style_dict = _style_dict(style)
     feature = cfeature.NaturalEarthFeature(
         name="land", category="physical", scale="50m", facecolor=style_dict["landcolor"]
@@ -196,9 +207,13 @@ def _add_land(ax, style):
     ax.add_feature(feature)
 
 
+@requires("cartopy")
 def _add_coast(ax, style):
+    import cartopy.feature as cfeature
+    from cartopy.mpl import geoaxes
+
     if not isinstance(ax, geoaxes.GeoAxesSubplot):
-        raise ValueError("Cannot add land on non-cartopy axes. Got ($s)" % type(ax))
+        raise TypeError("Cannot add land on non-cartopy axes. Got %s." % type(ax))
     style_dict = _style_dict(style)
     feature = cfeature.NaturalEarthFeature(
         name="coastline",
@@ -225,6 +240,7 @@ def basic(
     return ax, pp
 
 
+@requires("cartopy")
 def rotating_globe(
     da,
     fig,
@@ -284,6 +300,7 @@ def rotating_globe(
     **kwargs
         Passed on to the xarray plotting method.
     """
+    import cartopy.crs as ccrs
 
     # rotate lon_rotations times throughout movie and start at lon_start
     lon = np.linspace(0, 360 * lon_rotations, len(da[framedim])) + lon_start
@@ -337,6 +354,7 @@ def rotating_globe(
     return ax, pp
 
 
+@requires("cartopy")
 def rotating_globe_dark(da, fig, timestamp, **kwargs):
     warnings.warn(
         "This preset will be deprecated in the future. \

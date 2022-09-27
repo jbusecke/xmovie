@@ -1,19 +1,28 @@
-name: test_env_xmovie
+# Conda environment for testing xmovie in CI
+name: xmovie-test
 channels:
   - conda-forge
+  - nodefaults
 dependencies:
-  - xarray
-  - dask
-  - scipy
-  - numpy
-  - pytest
-  - future
+  - python
+  #
+  # xmovie core
   - matplotlib
-  - cartopy
-  - pykdtree
+  - numpy
+  - xarray
+  #
   - ffmpeg
+  #
+  # Extras
+  - cartopy
+  # - cftime
+  - dask-core
+  # - nc-time-axis
+  # - scipy
   - tqdm
+  #
+  # Test
   - opencv
-  - pip:
-    - codecov
-    - pytest-cov
+  - pillow
+  - pytest
+  - pytest-cov

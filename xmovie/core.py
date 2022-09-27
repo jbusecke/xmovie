@@ -1,23 +1,24 @@
 import matplotlib as mpl
 
 mpl.use("Agg")
-import re
-import os
-import sys
-import glob
-import warnings
 import gc
+import glob
+import os
+import re
+import sys
+import warnings
+from subprocess import PIPE, STDOUT, Popen
+
+import matplotlib.pyplot as plt
 import xarray as xr
 
-from .presets import _check_input, basic
-from subprocess import Popen, PIPE, STDOUT
-import matplotlib.pyplot as plt
+from .presets import basic
 
 try:
     from tqdm.auto import tqdm
 
     tqdm_avail = True
-except:
+except Exception:
     warnings.warn(
         "Optional dependency `tqdm` not found. This will make progressbars a lot nicer. \
     Install with `conda install -c conda-forge tqdm`"
@@ -27,7 +28,6 @@ except:
 # import xarray as xr
 # import dask.bag as db
 import dask.array as dsa
-
 
 # is it a good idea to set these here?
 # Needs to be dependent on dpi and videosize
@@ -92,11 +92,7 @@ def _check_ffmpeg_version():
     else:
         # parse version number
         try:
-            found = (
-                re.search("ffmpeg version (.+?) Copyright", str(output))
-                .group(1)
-                .replace(" ", "")
-            )
+            found = re.search("ffmpeg version (.+?) Copyright", str(output)).group(1).replace(" ", "")
             return found
         except AttributeError:
             # ffmpeg version, Copyright not found in the original string
@@ -141,9 +137,7 @@ def _check_ffmpeg_execute(command, verbose=False):
             )
 
 
-def _combine_ffmpeg_command(
-    sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options
-):
+def _combine_ffmpeg_command(sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options):
     # we need `-y` because i can not properly diagnose the errors here...
     command = 'ffmpeg -r %i -i "%s" -y %s -r %i "%s"' % (
         framerate,
@@ -172,9 +166,7 @@ def convert_gif(
 ):
 
     if gif_palette:
-        palette_filter = (
-            '-filter_complex "[0:v] split [a][b];[a] palettegen [p];[b][p] paletteuse"'
-        )
+        palette_filter = '-filter_complex "[0:v] split [a][b];[a] palettegen [p];[b][p] paletteuse"'
     else:
         palette_filter = ""
 
@@ -205,9 +197,7 @@ def combine_frames_into_movie(
     framerate=20,
 ):
 
-    command = _combine_ffmpeg_command(
-        sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options
-    )
+    command = _combine_ffmpeg_command(sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options)
     p = _check_ffmpeg_execute(command, verbose=verbose)
 
     print("Movie created at %s" % (moviename))
@@ -347,9 +337,7 @@ class Movie:
         # produce dummy output for ax and pp if the plotfunc does not provide them
         if self.plotfunc_n_outargs == 2:
             # this should be the case for all presets provided by xmovie
-            ax, pp = self.plotfunc(
-                self.data, fig, timestep, self.framedim, **self.kwargs
-            )
+            ax, pp = self.plotfunc(self.data, fig, timestep, self.framedim, **self.kwargs)
         else:
             warnings.warn(
                 "The provided `plotfunc` does not provide the expected number of output arguments.\
@@ -368,9 +356,7 @@ class Movie:
         timestep : int
             Timestep (frame) to preview.
         """
-        with plt.rc_context(
-            {"figure.dpi": self.dpi, "figure.figsize": [self.width, self.height]}
-        ):
+        with plt.rc_context({"figure.dpi": self.dpi, "figure.figsize": [self.width, self.height]}):
             fig, ax, pp = self.render_single_frame(timestep)
 
     def save_frames_serial(self, odir, progress=False):
@@ -407,9 +393,6 @@ class Movie:
         parallel_compute_kwargs : dict
             Keyword arguments to pass to Dask's :meth:`~dask.array.Array.compute`.
         """
-        import numpy as np
-        import dask.array as darray
-
         da = self.data
         framedim = self.framedim
 
@@ -424,7 +407,7 @@ class Movie:
         elif type(da) is xr.Dataset:
             framedim_chunks = da.chunks[framedim]
         else:
-            raise(TypeError("`da` must be either an xarray.DataArray or xarray.Dataset"))
+            raise TypeError("`da` must be either an xarray.DataArray or xarray.Dataset")
 
         if not all([chunk == 1 for chunk in framedim_chunks]):
             raise ValueError(
@@ -538,8 +521,7 @@ class Movie:
         if os.path.exists(mpath):
             if not overwrite_existing:
                 raise RuntimeError(
-                    "File `%s` already exists. Set `overwrite_existing` to True to overwrite."
-                    % (mpath)
+                    "File `%s` already exists. Set `overwrite_existing` to True to overwrite." % (mpath)
                 )
         if isgif:
             if os.path.exists(gpath):
@@ -551,9 +533,7 @@ class Movie:
 
         # print frames
         if parallel:
-            self.save_frames_parallel(
-                dirname, parallel_compute_kwargs=parallel_compute_kwargs
-            )
+            self.save_frames_parallel(dirname, parallel_compute_kwargs=parallel_compute_kwargs)
         else:
             self.save_frames_serial(dirname, progress=progress)
 

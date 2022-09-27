@@ -155,7 +155,7 @@ def _set_style(fig, ax, pp, style):
 
     fig.patch.set_facecolor(bgcolor)
     if is_geoax:
-        ax.background_patch.set_facecolor(bgcolor)
+        ax.patch.set_facecolor(bgcolor)
     else:
         ax.set_facecolor(bgcolor)
 

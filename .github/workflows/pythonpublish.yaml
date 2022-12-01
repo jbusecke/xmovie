@@ -65,7 +65,7 @@ jobs:
           ls -ltrh dist
       - name: Publish package to TestPyPI
         if: github.event_name == 'pull_request'
-        uses: pypa/gh-action-pypi-publish@v1.5.1
+        uses: pypa/gh-action-pypi-publish@v1.5.2
         with:
           user: __token__
           password: ${{ secrets.TESTPYPI_TOKEN }}
@@ -89,7 +89,7 @@ jobs:
           name: releases
           path: dist
       - name: Publish package to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.5.1
+        uses: pypa/gh-action-pypi-publish@v1.5.2
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}

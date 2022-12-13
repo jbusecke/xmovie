@@ -1,3 +1,4 @@
+autoupdate_schedule: quarterly
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: "v4.4.0"
@@ -31,4 +32,4 @@ repos:
     rev: "6.0.0"
     hooks:
       - id: flake8
-autoupdate_schedule: monthly
+

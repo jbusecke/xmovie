@@ -169,7 +169,7 @@ def _set_style(fig, ax, pp, style):
     # modify colorbar
     try:
         cb = pp.colorbar
-    except (AttributeError):
+    except AttributeError:
         cb = None
 
     if cb is not None:

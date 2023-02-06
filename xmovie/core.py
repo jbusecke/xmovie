@@ -164,7 +164,6 @@ def convert_gif(
     remove_movie=True,
     gif_framerate=5,
 ):
-
     if gif_palette:
         palette_filter = '-filter_complex "[0:v] split [a][b];[a] palettegen [p];[b][p] paletteuse"'
     else:
@@ -196,7 +195,6 @@ def combine_frames_into_movie(
     ffmpeg_options="-c:v libx264 -preset veryslow -crf 15 -pix_fmt yuv420p",
     framerate=20,
 ):
-
     command = _combine_ffmpeg_command(sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options)
     p = _check_ffmpeg_execute(command, verbose=verbose)
 

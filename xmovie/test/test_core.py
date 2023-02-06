@@ -145,7 +145,6 @@ def test_dataarray():
     ],
 )
 def test_write_movie(tmpdir, moviename, remove_frames, framerate, ffmpeg_options):
-
     frame_pattern = "frame_%05d.png"  # the default
     m = tmpdir.join(moviename)
     da = test_dataarray()

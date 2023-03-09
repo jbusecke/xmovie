@@ -1,5 +1,13 @@
 What's New
 ==========
+v0.4.0 (unreleased)
+-------------------
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+- Drop support for Python 3.7 (:pull:`139`).
+  By `Julius Busecke <https://github.com/jbusecke>`.
+
 v0.3.1
 -------------------
 

@@ -45,7 +45,9 @@ def _core_plot(ax, data, plotmethod=None, **kwargs):
     elif plotmethod == "imshow":
         # p = data.plot.imshow(ax=ax, **kwargs)
         # testing interpolation
-        p = data.plot.imshow(ax=ax, interpolation="gaussian", **kwargs)
+        props = dict(interpolation="gaussian")
+        props.update(kwargs)
+        p = data.plot.imshow(ax=ax, **props)
         # print(p.get_interpolation())
     elif plotmethod == "pcolormesh":
         p = data.plot.pcolormesh(ax=ax, **kwargs)

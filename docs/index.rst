@@ -95,7 +95,7 @@ If you want to install the latest version from GitHub, simply run
 
    .. prompt:: bash
 
-      git clone https://github.com/jbusecke/xmovie.git`
+      git clone https://github.com/jbusecke/xmovie.git
 
    and enter your github password.
 

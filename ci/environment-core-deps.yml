@@ -9,7 +9,6 @@ dependencies:
   - pytest
   - future
   - matplotlib
-  - cartopy
   - pykdtree
   - opencv
   - pip:

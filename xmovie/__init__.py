@@ -1,5 +1,5 @@
 from .core import Movie
-from .presets import rotating_globe
+from .presets import basic
 
 try:
     from ._version import __version__

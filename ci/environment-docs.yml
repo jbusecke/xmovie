@@ -7,7 +7,6 @@ dependencies:
   # Core
   - xarray
   - matplotlib
-  - cartopy
   - ffmpeg
   # Optional
   - tqdm

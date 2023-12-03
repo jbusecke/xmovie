@@ -134,7 +134,6 @@ def _set_style(fig, ax, pp, style):
         plt.setp(plt.getp(cb.ax.axes, "yticklabels"), color=fgcolor)
 
 
-
 # Presets (should proabably put all others into a submodule)
 
 
@@ -148,5 +147,3 @@ def basic(
     data = _check_input(da, plot_variable)
     pp = _base_plot(ax, data, timestamp, framedim, plotmethod=plotmethod, **kwargs)
     return ax, pp
-
-

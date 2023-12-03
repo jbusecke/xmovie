@@ -41,4 +41,3 @@ def test_core_plot(plotmethod, expected_type, filled):
     assert isinstance(pp, expected_type)
     if filled is not None:
         assert pp.filled == filled
-

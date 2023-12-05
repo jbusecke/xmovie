@@ -123,18 +123,14 @@ def _execute_command(command, verbose=False, error=True):
 
 def _check_ffmpeg_execute(command, verbose=False):
     if _check_ffmpeg_version() is None:
-        raise RuntimeError(
-            "Could not find an ffmpeg version on the system. \
-        Please install ffmpeg with e.g. `conda install -c conda-forge ffmpeg`"
-        )
+        raise RuntimeError("Could not find an ffmpeg version on the system. Please install ffmpeg with e.g. `conda install -c conda-forge ffmpeg`")
     else:
         try:
+            print(command)
             p = _execute_command(command, verbose=verbose)
             return p
         except RuntimeError:
-            raise RuntimeError(
-                "Something has gone wrong. Use `verbose=True` to check if ffmpeg displays a problem"
-            )
+            raise RuntimeError("Something has gone wrong. Use `verbose=True` to check if ffmpeg displays a problem")
 
 
 def _combine_ffmpeg_command(sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options):

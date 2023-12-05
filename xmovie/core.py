@@ -523,16 +523,14 @@ class Movie:
             self.save_frames_serial(dirname, progress=progress)
 
         # Create movie
-        combine_frames_into_movie(
-            dirname,
-            moviefile,
-            frame_pattern=self.frame_pattern,
-            remove_frames=remove_frames,
-            verbose=verbose,
-            framerate=framerate,
-            ffmpeg_options=ffmpeg_options,
-            ffmpeg_call=ffmpeg_call,
-        )
+        combine_frames_into_movie(dirname, moviefile,
+                                  frame_pattern=self.frame_pattern,
+                                  remove_frames=remove_frames,
+                                  verbose=verbose,
+                                  framerate=framerate,
+                                  ffmpeg_options=ffmpeg_options,
+                                  ffmpeg_call=ffmpeg_call,
+                                  )
 
         # Create gif
         if isgif:

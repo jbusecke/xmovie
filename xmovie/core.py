@@ -123,18 +123,23 @@ def _execute_command(command, verbose=False, error=True):
 
 def _check_ffmpeg_execute(command, verbose=False):
     if _check_ffmpeg_version() is None:
-        raise RuntimeError("Could not find an ffmpeg version on the system. Please install ffmpeg with e.g. `conda install -c conda-forge ffmpeg`")
+        raise RuntimeError(
+            "Could not find an ffmpeg version on the system. Please install ffmpeg with e.g. `conda install -c conda-forge ffmpeg`"
+        )
     else:
         try:
             print(command)
             p = _execute_command(command, verbose=verbose)
             return p
         except RuntimeError:
-            raise RuntimeError("Something has gone wrong. Use `verbose=True` to check if ffmpeg displays a problem")
+            raise RuntimeError(
+                "Something has gone wrong. Use `verbose=True` to check if ffmpeg displays a problem"
+            )
 
 
-def _combine_ffmpeg_command(sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options,
-                            ffmpeg_call="ffmpeg"):
+def _combine_ffmpeg_command(
+    sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options, ffmpeg_call="ffmpeg"
+):
     # we need `-y` because i can not properly diagnose the errors here...
     command = '%s -r %i -i "%s" -y %s -r %i "%s"' % (
         ffmpeg_call,
@@ -184,15 +189,19 @@ def convert_gif(
     return p
 
 
-def combine_frames_into_movie(sourcefolder, moviename,
-                              frame_pattern = "frame_%05d.png",
-                              remove_frames = True,
-                              verbose = False,
-                              ffmpeg_options = "-c:v libx264 -preset veryslow -crf 15 -pix_fmt yuv420p",
-                              framerate = 20,
-                              ffmpeg_call = "ffmpeg"):
-    command = _combine_ffmpeg_command(sourcefolder, moviename, framerate, frame_pattern,
-                                      ffmpeg_options, ffmpeg_call=ffmpeg_call)
+def combine_frames_into_movie(
+    sourcefolder,
+    moviename,
+    frame_pattern="frame_%05d.png",
+    remove_frames=True,
+    verbose=False,
+    ffmpeg_options="-c:v libx264 -preset veryslow -crf 15 -pix_fmt yuv420p",
+    framerate=20,
+    ffmpeg_call="ffmpeg",
+):
+    command = _combine_ffmpeg_command(
+        sourcefolder, moviename, framerate, frame_pattern, ffmpeg_options, ffmpeg_call=ffmpeg_call
+    )
     p = _check_ffmpeg_execute(command, verbose=verbose)
 
     print("Movie created at %s" % (moviename))
@@ -421,20 +430,23 @@ class Movie:
         ).compute(**parallel_compute_kwargs)
         return
 
-    def save(self, filename,
-             remove_frames=True,
-             remove_movie=True,
-             progress=False,
-             verbose=False,
-             overwrite_existing=False,
-             parallel=False,
-             parallel_compute_kwargs=dict(),
-             framerate=15,
-             ffmpeg_options="-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p",
-             gif_palette=False,
-             gif_resolution_factor=0.5,
-             gif_framerate=10,
-             ffmpeg_call="ffmpeg"):
+    def save(
+        self,
+        filename,
+        remove_frames=True,
+        remove_movie=True,
+        progress=False,
+        verbose=False,
+        overwrite_existing=False,
+        parallel=False,
+        parallel_compute_kwargs=dict(),
+        framerate=15,
+        ffmpeg_options="-c:v libx264 -preset veryslow -crf 10 -pix_fmt yuv420p",
+        gif_palette=False,
+        gif_resolution_factor=0.5,
+        gif_framerate=10,
+        ffmpeg_call="ffmpeg",
+    ):
         """Save out animation from Movie object.
 
         Parameters
@@ -523,14 +535,16 @@ class Movie:
             self.save_frames_serial(dirname, progress=progress)
 
         # Create movie
-        combine_frames_into_movie(dirname, moviefile,
-                                  frame_pattern=self.frame_pattern,
-                                  remove_frames=remove_frames,
-                                  verbose=verbose,
-                                  framerate=framerate,
-                                  ffmpeg_options=ffmpeg_options,
-                                  ffmpeg_call=ffmpeg_call,
-                                  )
+        combine_frames_into_movie(
+            dirname,
+            moviefile,
+            frame_pattern=self.frame_pattern,
+            remove_frames=remove_frames,
+            verbose=verbose,
+            framerate=framerate,
+            ffmpeg_options=ffmpeg_options,
+            ffmpeg_call=ffmpeg_call,
+        )
 
         # Create gif
         if isgif:

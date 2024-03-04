@@ -10,6 +10,7 @@ import warnings
 from subprocess import PIPE, STDOUT, Popen
 
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import xarray as xr
 
 from .presets import basic
@@ -71,7 +72,7 @@ def _parse_plot_defaults(da, kwargs):
 
 def _check_plotfunc_output(func, da, framedim="time", **kwargs):
     timestep = 0
-    fig = plt.figure()
+    fig = Figure()
     oargs = func(da, fig, timestep, framedim, **kwargs)
     # I just want the number of output args, delete plot
     plt.close(fig)
@@ -324,7 +325,7 @@ class Movie:
         pp
             Matplotlib primitives returned by the plotting function.
         """
-        fig = plt.figure(figsize=[self.width, self.height])
+        fig = Figure(figsize=[self.width, self.height])
         # create_frame(self.pixelwidth, self.pixelheight, self.dpi)
         # produce dummy output for ax and pp if the plotfunc does not provide them
         if self.plotfunc_n_outargs == 2:

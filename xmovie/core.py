@@ -309,7 +309,7 @@ class Movie:
             self.plotfunc, self.data, self.framedim, **self.kwargs
         )
 
-    def render_single_frame(self, timestep):
+    def render_single_frame(self, timestep, obj=None):
         """renders complete figure (frame) for given timestep.
 
         Parameters
@@ -329,14 +329,14 @@ class Movie:
         # produce dummy output for ax and pp if the plotfunc does not provide them
         if self.plotfunc_n_outargs == 2:
             # this should be the case for all presets provided by xmovie
-            ax, pp = self.plotfunc(self.data, fig, timestep, self.framedim, **self.kwargs)
+            ax, pp = self.plotfunc(self.data, fig, timestep, self.framedim, obj=obj, **self.kwargs)
         else:
             warnings.warn(
                 "The provided `plotfunc` does not provide the expected number of output arguments.\
             Expected a function `ax,pp =plotfunc(...)` but got %i output arguments. Inserting dummy values. This should not affect output. ",
                 UserWarning,
             )
-            _ = self.plotfunc(self.data, fig, timestep, self.framedim, **self.kwargs)
+            _ = self.plotfunc(self.data, fig, timestep, self.framedim, obj=obj, **self.kwargs)
             ax, pp = None, None
         return fig, ax, pp
 
@@ -412,7 +412,7 @@ class Movie:
                 abs(total_time - time_of_chunk[0]).argmin().item()
             )  # get index of chunk in framedim
 
-            fig, ax, pp = self.render_single_frame(timestep)
+            fig, ax, pp = self.render_single_frame(timestep, obj=xr_array)
             save_single_frame(fig, timestep, odir=odir, frame_pattern=self.frame_pattern, dpi=self.dpi)
 
             return time_of_chunk

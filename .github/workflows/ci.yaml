@@ -26,19 +26,19 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest"]
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
 
     steps:
       - uses: actions/checkout@v4
       - name: Create conda environment
-        uses: mamba-org/provision-with-micromamba@main
+        uses: mamba-org/setup-micromamba@422500192359a097648154e8db4e39bdb6c6eed7  # v1.8.1
         with:
           cache-downloads: true
-          cache-env: true
+          cache-environment: true
           micromamba-version: 'latest'
           environment-file: ci/environment.yml
-          extra-specs: |
+          create-args: >-
             python=${{ matrix.python-version }}
       - name: Install xMOVIE
         run: |
@@ -69,14 +69,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Create conda environment
-        uses: mamba-org/provision-with-micromamba@main
+        uses: mamba-org/setup-micromamba@422500192359a097648154e8db4e39bdb6c6eed7  # v1.8.1
         with:
           cache-downloads: true
-          cache-env: true
+          cache-environment: true
           micromamba-version: 'latest'
           environment-file: ci/environment-core-deps.yml
-          extra-specs: |
-            python=3.10
+          create-args: >-
+            python=3.11
       - name: Install xMOVIE
         run: |
           python -m pip install -e . --no-deps

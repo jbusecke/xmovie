@@ -124,7 +124,7 @@ def test_check_ffmpeg_execute():
         _check_ffmpeg_execute("ls -l?")
 
 
-def test_dataarray():
+def create_test_dataarray():
     """Create a little test dataset"""
     x = np.arange(4)
     y = np.arange(5)
@@ -147,7 +147,7 @@ def test_dataarray():
 def test_write_movie(tmpdir, moviename, remove_frames, framerate, ffmpeg_options):
     frame_pattern = "frame_%05d.png"  # the default
     m = tmpdir.join(moviename)
-    da = test_dataarray()
+    da = create_test_dataarray()
     mov = Movie(da)
     mov.save_frames_serial(tmpdir)
     filenames = [tmpdir.join(frame_pattern % ff) for ff in range(len(da.time))]
@@ -182,7 +182,7 @@ def test_convert_gif(tmpdir, moviename, remove_movie, gif_palette, gifname, gif_
     g = tmpdir.join(gifname)
     gpath = g.strpath
 
-    da = test_dataarray()
+    da = create_test_dataarray()
     mov = Movie(da)
     mov.save_frames_serial(tmpdir)
 
@@ -218,7 +218,7 @@ def test_convert_gif(tmpdir, moviename, remove_movie, gif_palette, gifname, gif_
 @pytest.mark.parametrize("dpi", [50, 200])
 @pytest.mark.parametrize("plotfunc", [None, rotating_globe, dummy_plotfunc])
 def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
-    da = test_dataarray()
+    da = create_test_dataarray()
     kwargs = dict(
         plotfunc=plotfunc,
         framedim=framedim,
@@ -253,7 +253,7 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
         mov = Movie(da, framedim="wrong")
     # passing dataset without plot_variable (this should error out)
     with pytest.raises(ValueError):
-        ds = xr.Dataset({"some": test_dataarray(), "stuff": test_dataarray()})
+        ds = xr.Dataset({"some": create_test_dataarray(), "stuff": create_test_dataarray()})
         mov = Movie(ds)
 
     # this should work (this way one could pass a totally custom function)
@@ -263,7 +263,7 @@ def test_Movie(plotfunc, framedim, frame_pattern, dpi, pixelheight, pixelwidth):
 
 @pytest.mark.parametrize("plotfunc, expected_empty", [(dummy_plotfunc, True), (basic, False)])
 def test_movie_render_frame(plotfunc, expected_empty):
-    da = test_dataarray()
+    da = create_test_dataarray()
     mov = Movie(da, plotfunc=plotfunc)
 
     if expected_empty:
@@ -282,16 +282,15 @@ def test_movie_render_frame(plotfunc, expected_empty):
 
 
 def test_movie_preview():
-    da = test_dataarray()
+    da = create_test_dataarray()
     mov = Movie(da)
-    mov.preview(0)
-    fig = plt.gcf()
+    fig = mov.preview(0)
     assert mov.dpi == fig.dpi
 
 
 @pytest.mark.parametrize("frame_pattern", ["frame_%05d.png", "test%05d.png"])
 def test_movie_save_frames(tmpdir, frame_pattern):
-    da = test_dataarray()
+    da = create_test_dataarray()
     mov = Movie(da, frame_pattern=frame_pattern)
     mov.save_frames_serial(tmpdir)
     filenames = [tmpdir.join(frame_pattern % ff) for ff in range(len(da.time))]
@@ -313,7 +312,7 @@ def test_movie_save(tmpdir, parallel, filename, gif_palette, framerate, gif_fram
     print(gif_palette)
     # Need more tests for progress, verbose, overwriting
     path = tmpdir.join(filename)
-    da = test_dataarray()
+    da = create_test_dataarray()
     if parallel:
         da = da.chunk({"time": 1})
     mov = Movie(da)
@@ -345,7 +344,7 @@ def test_movie_save(tmpdir, parallel, filename, gif_palette, framerate, gif_fram
 
 def test_movie_save_parallel_no_dask(tmpdir):
     path = tmpdir.join("movie.mp4")
-    da = test_dataarray()
+    da = create_test_dataarray()
     mov = Movie(da)
     with pytest.raises(ValueError) as excinfo:
         mov.save(
@@ -358,7 +357,7 @@ def test_movie_save_parallel_no_dask(tmpdir):
 
 def test_movie_save_parallel_wrong_chunk(tmpdir):
     path = tmpdir.join("movie.mp4")
-    da = test_dataarray().chunk({"time": 2})
+    da = create_test_dataarray().chunk({"time": 2})
     mov = Movie(da)
     with pytest.raises(ValueError) as excinfo:
         mov.save(
@@ -376,7 +375,7 @@ def test_plotfunc_kwargs(tmpdir):
         if test1 is None:
             raise RuntimeError("test1 cannot be None")
 
-    da = test_dataarray()
+    da = create_test_dataarray()
     mov = Movie(da, plotfunc=plotfunc, test1=3)
     mov.preview(0)
     mov.save_frames_serial(tmpdir)
@@ -392,7 +391,7 @@ def test_plotfunc_kwargs_xfail(tmpdir):
         if test1 is None:
             raise RuntimeError("test1 cannot be None")
 
-    da = test_dataarray()
+    da = create_test_dataarray()
     mov = Movie(da, plotfunc=plotfunc, test1=3)
     mov.preview(0)
     mov.save_frames_serial(tmpdir)

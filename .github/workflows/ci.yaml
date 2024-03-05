@@ -35,7 +35,7 @@ jobs:
         uses: mamba-org/setup-micromamba@422500192359a097648154e8db4e39bdb6c6eed7  # v1.8.1
         with:
           cache-downloads: true
-          cache-env: true
+          cache-environment: true
           micromamba-version: 'latest'
           environment-file: ci/environment.yml
           create-args: >-
@@ -72,7 +72,7 @@ jobs:
         uses: mamba-org/setup-micromamba@422500192359a097648154e8db4e39bdb6c6eed7  # v1.8.1
         with:
           cache-downloads: true
-          cache-env: true
+          cache-environment: true
           micromamba-version: 'latest'
           environment-file: ci/environment-core-deps.yml
           create-args: >-

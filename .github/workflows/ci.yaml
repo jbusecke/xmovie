@@ -32,13 +32,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Create conda environment
-        uses: mamba-org/provision-with-micromamba@main
+        uses: mamba-org/setup-micromamba@422500192359a097648154e8db4e39bdb6c6eed7
         with:
           cache-downloads: true
           cache-env: true
           micromamba-version: 'latest'
           environment-file: ci/environment.yml
-          extra-specs: |
+          create-args: >-
             python=${{ matrix.python-version }}
       - name: Install xMOVIE
         run: |
@@ -69,13 +69,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Create conda environment
-        uses: mamba-org/provision-with-micromamba@main
+        uses: mamba-org/setup-micromamba@422500192359a097648154e8db4e39bdb6c6eed7
         with:
           cache-downloads: true
           cache-env: true
           micromamba-version: 'latest'
           environment-file: ci/environment-core-deps.yml
-          extra-specs: |
+          create-args: >-
             python=3.10
       - name: Install xMOVIE
         run: |

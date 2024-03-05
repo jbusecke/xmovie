@@ -76,7 +76,7 @@ jobs:
           micromamba-version: 'latest'
           environment-file: ci/environment-core-deps.yml
           create-args: >-
-            python=3.10
+            python=3.11
       - name: Install xMOVIE
         run: |
           python -m pip install -e . --no-deps

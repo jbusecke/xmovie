@@ -10,8 +10,8 @@ import warnings
 from subprocess import PIPE, STDOUT, Popen
 
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
 import xarray as xr
+from matplotlib.figure import Figure
 
 from .presets import basic
 

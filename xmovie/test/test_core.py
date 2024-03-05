@@ -284,8 +284,7 @@ def test_movie_render_frame(plotfunc, expected_empty):
 def test_movie_preview():
     da = test_dataarray()
     mov = Movie(da)
-    mov.preview(0)
-    fig = plt.gcf()
+    fig, _, _ = mov.preview(0)
     assert mov.dpi == fig.dpi
 
 

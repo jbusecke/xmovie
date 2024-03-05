@@ -352,6 +352,8 @@ class Movie:
         with plt.rc_context({"figure.dpi": self.dpi, "figure.figsize": [self.width, self.height]}):
             fig, ax, pp = self.render_single_frame(timestep)
 
+            return fig, ax, pp
+
     def save_frames_serial(self, odir, progress=False):
         """Save movie frames as picture files.
 

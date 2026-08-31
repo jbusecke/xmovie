@@ -383,10 +383,8 @@ def test_plotfunc_kwargs(tmpdir):
 
 
 def test_plotfunc_kwargs_xfail(tmpdir):
-    pytest.xfail(
-        "if **kwargs is not in the function signature \
-        and the input is checked, this should error out."
-    )
+    pytest.xfail("if **kwargs is not in the function signature \
+        and the input is checked, this should error out.")
 
     def plotfunc(ds, fig, tt, test1=None):
         if test1 is None:

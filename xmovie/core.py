@@ -19,10 +19,8 @@ try:
 
     tqdm_avail = True
 except Exception:
-    warnings.warn(
-        "Optional dependency `tqdm` not found. This will make progressbars a lot nicer. \
-    Install with `conda install -c conda-forge tqdm`"
-    )
+    warnings.warn("Optional dependency `tqdm` not found. This will make progressbars a lot nicer. \
+    Install with `conda install -c conda-forge tqdm`")
     tqdm_avail = False
 
 # import xarray as xr
@@ -83,7 +81,7 @@ def _check_plotfunc_output(func, da, framedim="time", **kwargs):
 
 def _check_ffmpeg_version():
     p = Popen("ffmpeg -version", stdout=PIPE, shell=True)
-    (output, err) = p.communicate()
+    output, err = p.communicate()
     p_status = p.wait()
     # Parse version
     if p_status != 0:
@@ -123,10 +121,8 @@ def _execute_command(command, verbose=False, error=True):
 
 def _check_ffmpeg_execute(command, verbose=False):
     if _check_ffmpeg_version() is None:
-        raise RuntimeError(
-            "Could not find an ffmpeg version on the system. \
-        Please install ffmpeg with e.g. `conda install -c conda-forge ffmpeg`"
-        )
+        raise RuntimeError("Could not find an ffmpeg version on the system. \
+        Please install ffmpeg with e.g. `conda install -c conda-forge ffmpeg`")
     else:
         try:
             p = _execute_command(command, verbose=verbose)

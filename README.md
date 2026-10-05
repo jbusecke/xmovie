@@ -61,13 +61,13 @@ High-quality movies and gifs can be created with only a few lines
 import xarray as xr
 from xmovie import Movie
 
-ds = xr.tutorial.open_dataset('air_temperature').isel(time=slice(0,150))
+ds = xr.tutorial.open_dataset("air_temperature").isel(time=slice(0, 150))
 mov = Movie(ds.air)
-mov.save('movie.mp4')
+mov.save("movie.mp4")
 ```
 Saving a `.gif` is as easy as changing the filename:
 ```python
-mov.save('movie.gif')
+mov.save("movie.gif")
 ```
 That is it! Now pat yourself on the shoulder and enjoy your masterpiece.
 

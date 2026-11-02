@@ -20,11 +20,8 @@ def _check_input(da, fieldname):
     elif isinstance(da, xr.DataArray):
         data = da
     else:
-        raise RuntimeWarning(
-            "Data must be xr.DataArray or xr.Dataset \
-        (with `fieldname` specified). Datatype found %s"
-            % type(da)
-        )
+        raise RuntimeWarning("Data must be xr.DataArray or xr.Dataset \
+        (with `fieldname` specified). Datatype found %s" % type(da))
     return data
 
 
@@ -54,11 +51,8 @@ def _core_plot(ax, data, plotmethod=None, **kwargs):
     elif plotmethod == "contourf":
         p = data.plot.contourf(ax=ax, **kwargs)
     else:
-        raise RuntimeError(
-            "Input '%s' not recognized \
-        as plotmode"
-            % plotmethod
-        )
+        raise RuntimeError("Input '%s' not recognized \
+        as plotmode" % plotmethod)
     return p
 
 
@@ -143,11 +137,8 @@ def _set_style(fig, ax, pp, style):
     style_dict = _style_dict(style)
     supported_styles = list(_style_dict_raw().keys())
     if (style not in supported_styles) and (style is not None):
-        raise ValueError(
-            "Given value for `style`(%s) not supported. \
-        Currently support [%s]"
-            % (style, supported_styles)
-        )
+        raise ValueError("Given value for `style`(%s) not supported. \
+        Currently support [%s]" % (style, supported_styles))
     # can I declare these in an automated fashinon?
     bgcolor = style_dict.pop("bgcolor", None)
     fgcolor = style_dict.pop("fgcolor", None)

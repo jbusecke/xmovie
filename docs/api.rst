@@ -22,8 +22,7 @@ They have a signature of the type:
 
 .. code-block::
 
-    def plotfunc(da, fig, timestamp, framedim, **kwargs):
-        ...
+    def plotfunc(da, fig, timestamp, framedim, **kwargs): ...
 
 .. autosummary::
    :toctree: api/
